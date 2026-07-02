@@ -1,12 +1,32 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:yamovies/main.dart';
+import 'package:yamovies/tmdb_attribution.dart';
 
 void main() {
-  testWidgets('start tag renders a minimal placeholder', (
+  testWidgets('app shell shows the title and greeting', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const Placeholder());
+    await tester.pumpWidget(const MovieApp());
 
-    expect(find.byType(Placeholder), findsOneWidget);
+    expect(find.text('Top Rated Movies'), findsOneWidget);
+    expect(find.text('Hello Flutter'), findsOneWidget);
+    expect(find.byType(TmdbAttributionButton), findsOneWidget);
+  });
+
+  testWidgets('About and credits contains the TMDB attribution', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const MovieApp());
+
+    await tester.tap(find.byTooltip('About and credits'));
+    await tester.pumpAndSettle();
+
+    final AboutDialog dialog = tester.widget<AboutDialog>(
+      find.byType(AboutDialog),
+    );
+    expect(dialog.applicationName, 'YaMovies');
+    expect(dialog.applicationIcon, isA<Image>());
+    expect(find.text(tmdbAttributionNotice), findsOneWidget);
   });
 }
