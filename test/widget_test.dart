@@ -9,10 +9,10 @@ import 'package:yamovies/main.dart';
 import 'package:yamovies/tmdb_attribution.dart';
 
 void main() {
-  testWidgets('screen shows the first movie card without overflow at 320 px', (
+  testWidgets('catalog shows six movies in fixture order at 320 px', (
     WidgetTester tester,
   ) async {
-    tester.view.physicalSize = const Size(320, 640);
+    tester.view.physicalSize = const Size(320, 1200);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -30,17 +30,54 @@ void main() {
     );
     expect(find.text('Top Rated Movies'), findsOneWidget);
     expect(find.byType(TmdbAttributionButton), findsOneWidget);
-    expect(find.byType(MovieCard), findsOneWidget);
-    expect(find.text('The Shawshank Redemption'), findsOneWidget);
-    expect(find.text('1994'), findsOneWidget);
-    expect(find.text('8.7'), findsOneWidget);
-    expect(find.text('Drama, Crime'), findsOneWidget);
-    final Image poster = tester.widget<Image>(find.byType(Image));
+    expect(find.byType(GridView), findsOneWidget);
+
+    final List<MovieCard> cards = tester
+        .widgetList<MovieCard>(find.byType(MovieCard))
+        .toList();
+    expect(cards, hasLength(6));
     expect(
-      (poster.image as AssetImage).assetName,
-      moviePosterAssets[mockTopRatedMoviesResponse.results.first.id],
+      cards.map((MovieCard card) => card.movie.id),
+      mockTopRatedMoviesResponse.results.map((Movie movie) => movie.id),
     );
+    expect(
+      cards.map((MovieCard card) => card.posterAssetPath),
+      mockTopRatedMoviesResponse.results.map(
+        (Movie movie) => moviePosterAssets[movie.id],
+      ),
+    );
+    expect(find.text('The Shawshank Redemption'), findsOneWidget);
+    expect(find.text('Spirited Away'), findsOneWidget);
+    final Text longTitle = tester.widget<Text>(
+      find.text('The Shawshank Redemption'),
+    );
+    final Text longGenres = tester.widget<Text>(
+      find.text('Drama, History, War'),
+    );
+    expect(longTitle.maxLines, 2);
+    expect(longTitle.overflow, TextOverflow.ellipsis);
+    expect(longGenres.maxLines, 1);
+    expect(longGenres.overflow, TextOverflow.ellipsis);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('catalog scrolls without overflow at 320 and 390 px', (
+    WidgetTester tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    for (final double width in <double>[320, 390]) {
+      tester.view.physicalSize = Size(width, 640);
+      await tester.pumpWidget(const MovieApp());
+
+      await tester.drag(find.byType(GridView), const Offset(0, -600));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Spirited Away'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
   });
 
   testWidgets('movie card shows fallbacks for missing presentation data', (
@@ -62,10 +99,11 @@ void main() {
       voteAverage: 0,
       voteCount: 0,
     );
-    final List<String> genreNames = resolveMovieGenres(
-      movie,
-      mockMovieGenresResponse.genres,
-    );
+    final Map<int, String> genreNamesById = <int, String>{
+      for (final Genre genre in mockMovieGenresResponse.genres)
+        genre.id: genre.name,
+    };
+    final List<String> genreNames = resolveMovieGenres(movie, genreNamesById);
 
     await tester.pumpWidget(
       MaterialApp(

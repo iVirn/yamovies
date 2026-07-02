@@ -1,10 +1,10 @@
 # YaMovies — Flutter lecture 1 demo
 
 This repository contains the tag-by-tag demo for the first Flutter lecture.
-`lecture-1-03-movie-card` connects the prepared TMDB-shaped fixtures to the UI
-for the first time. `MovieListScreen` resolves genres and the local poster,
-while stateless `MovieCard` renders The Shawshank Redemption with offline and
-missing-data fallbacks. The catalog still contains exactly one card.
+`lecture-1-04-grid` renders all six prepared movies in fixture order with a
+two-column `GridView.builder`. `MovieListScreen` builds one genre lookup and
+passes resolved names and local poster paths to each stateless `MovieCard`.
+The catalog works offline and remains intentionally free of local state.
 
 ## Requirements
 

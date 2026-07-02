@@ -11,39 +11,41 @@ class MovieListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Movie movie = mockTopRatedMoviesResponse.results.first;
-    final List<String> genreNames = resolveMovieGenres(
-      movie,
-      mockMovieGenresResponse.genres,
-    );
+    final List<Movie> movies = mockTopRatedMoviesResponse.results;
+    final Map<int, String> genreNamesById = <int, String>{
+      for (final Genre genre in mockMovieGenresResponse.genres)
+        genre.id: genre.name,
+    };
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Top Rated Movies'),
         actions: const <Widget>[TmdbAttributionButton()],
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 220),
-            child: MovieCard(
-              movie: movie,
-              genreNames: genreNames,
-              posterAssetPath: moviePosterAssets[movie.id],
-            ),
-          ),
+      body: GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.40,
         ),
+        itemCount: movies.length,
+        itemBuilder: (BuildContext context, int index) {
+          final Movie movie = movies[index];
+
+          return MovieCard(
+            movie: movie,
+            genreNames: resolveMovieGenres(movie, genreNamesById),
+            posterAssetPath: moviePosterAssets[movie.id],
+          );
+        },
       ),
     );
   }
 }
 
-List<String> resolveMovieGenres(Movie movie, Iterable<Genre> genres) {
-  final Map<int, String> genreNamesById = <int, String>{
-    for (final Genre genre in genres) genre.id: genre.name,
-  };
-
+List<String> resolveMovieGenres(Movie movie, Map<int, String> genreNamesById) {
   if (movie.genreIds.isEmpty) {
     return const <String>['Unknown'];
   }
