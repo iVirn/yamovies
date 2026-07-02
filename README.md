@@ -1,9 +1,10 @@
 # YaMovies — Flutter lecture 1 demo
 
 This repository contains the tag-by-tag demo for the first Flutter lecture.
-`lecture-1-01-app-shell` introduces `MovieApp`, `MaterialApp`, a Material 3
-theme, `Scaffold` and the TMDB About/Credits action. API-shaped fixtures and
-local movie assets remain prepared but are not connected to the UI yet.
+`lecture-1-02-widget-tree` separates app-level configuration from the screen:
+`MovieApp` owns `MaterialApp` and its theme, while `MovieListScreen` owns the
+`Scaffold`, AppBar and TMDB About/Credits action. API-shaped fixtures and local
+movie assets remain prepared but are not connected to the UI yet.
 
 ## Requirements
 

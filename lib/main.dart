@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'tmdb_attribution.dart';
+import 'features/movies/movie_list_screen.dart';
 
 void main() {
   runApp(const MovieApp());
@@ -17,13 +17,7 @@ class MovieApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Top Rated Movies'),
-          actions: const <Widget>[TmdbAttributionButton()],
-        ),
-        body: const Center(child: Text('Hello Flutter')),
-      ),
+      home: const MovieListScreen(),
     );
   }
 }
