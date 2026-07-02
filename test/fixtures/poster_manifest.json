@@ -1,0 +1,50 @@
+{
+  "image_size": "w500",
+  "pixel_width": 500,
+  "pixel_height": 750,
+  "downloaded_at": "2026-07-01",
+  "posters": [
+    {
+      "movie_id": 278,
+      "poster_path": "/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg",
+      "source_url": "https://image.tmdb.org/t/p/w500/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg",
+      "local_asset": "posters/278-the-shawshank-redemption.jpg",
+      "sha256": "6ef26252dc7a8ab49a84a218c3921227edbebead46504334b8e77e50be604192"
+    },
+    {
+      "movie_id": 238,
+      "poster_path": "/3bhkrj58Vtu7enYsRolD1fZdja1.jpg",
+      "source_url": "https://image.tmdb.org/t/p/w500/3bhkrj58Vtu7enYsRolD1fZdja1.jpg",
+      "local_asset": "posters/238-the-godfather.jpg",
+      "sha256": "8292b3583f651d5a5f7e4bdd3f24c51e96a25ef6bc323f54ceedb2d0cf2545be"
+    },
+    {
+      "movie_id": 240,
+      "poster_path": "/hek3koDUyRQk7FIhPXsa6mT2Zc3.jpg",
+      "source_url": "https://image.tmdb.org/t/p/w500/hek3koDUyRQk7FIhPXsa6mT2Zc3.jpg",
+      "local_asset": "posters/240-the-godfather-part-ii.jpg",
+      "sha256": "b78ee3457b23e058bd794f602745777366e7c4f1bfd8b0a4019e0b1a06f36660"
+    },
+    {
+      "movie_id": 424,
+      "poster_path": "/sF1U4EUQS8YHUYjNl3pMGNIQyr0.jpg",
+      "source_url": "https://image.tmdb.org/t/p/w500/sF1U4EUQS8YHUYjNl3pMGNIQyr0.jpg",
+      "local_asset": "posters/424-schindlers-list.jpg",
+      "sha256": "59232dafb9e2725f28bf264557ad687024e7a22130fa5d87e67624d6d2ff00e1"
+    },
+    {
+      "movie_id": 389,
+      "poster_path": "/ow3wq89wM8qd5X7hWKxiRfsFf9C.jpg",
+      "source_url": "https://image.tmdb.org/t/p/w500/ow3wq89wM8qd5X7hWKxiRfsFf9C.jpg",
+      "local_asset": "posters/389-12-angry-men.jpg",
+      "sha256": "bd0605c5edac4d5fe81aeea8c1b0fb1741072b687fdb2675e7e5f15e033483f9"
+    },
+    {
+      "movie_id": 129,
+      "poster_path": "/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg",
+      "source_url": "https://image.tmdb.org/t/p/w500/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg",
+      "local_asset": "posters/129-spirited-away.jpg",
+      "sha256": "e7cfb581b90c22783d4a25db44cad33bcb82f43e030eeb9e992e284a4296ee72"
+    }
+  ]
+}

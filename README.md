@@ -1,17 +1,39 @@
-# yamovies
+# YaMovies — Flutter lecture 1 demo
 
-A new Flutter project.
+This repository contains the tag-by-tag demo for the first Flutter lecture.
+`lecture-1-start` is deliberately minimal: the app renders a `Placeholder`,
+while API-shaped fixtures and local assets are prepared for later checkpoints.
 
-## Getting Started
+## Requirements
 
-This project is a starting point for a Flutter application.
+- Flutter 3.44.4 stable
+- Dart 3.12.2
 
-A few resources to get you started if this is your first Flutter project:
+The exact Flutter version is pinned in `.fvmrc`:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+fvm install 3.44.4
+fvm flutter pub get
+fvm flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+If FVM is not used, verify that `flutter --version` reports Flutter 3.44.4.
+
+## Validate this tag
+
+```bash
+shasum -a 256 -c docs/tmdb_resources/SHA256SUMS
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze
+flutter test
+```
+
+## Resources and attribution
+
+The fixture is a curated six-movie snapshot shaped like TMDB API v3 responses;
+it is not a complete `/movie/top_rated` page. Resource provenance and checksum
+instructions are in [docs/tmdb_resources/README.md](docs/tmdb_resources/README.md).
+
+This product uses the TMDB API but is not endorsed or certified by TMDB.
+
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for complete attribution.

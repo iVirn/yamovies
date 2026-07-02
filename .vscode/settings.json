@@ -1,0 +1,22 @@
+{
+  // Использовать Flutter SDK, закреплённый в проекте через fvm (.fvmrc → 3.44.4).
+  // Путь относительный — расширение Dart/Flutter резолвит его в .fvm/flutter_sdk.
+  "dart.flutterSdkPath": ".fvm/flutter_sdk",
+
+  // Резолвить пакеты этого проекта строго с pub.dev.
+  // Иначе pub наследует PUB_HOSTED_URL внутреннего зеркала Яндекса
+  // (dart-unpub.taxi.yandex-team.ru), где нет актуального matcher 0.12.19,
+  // который пинит flutter_test из Flutter 3.44.4 → "version solving failed".
+  // Проект использует только публичные пакеты, зеркало ему не нужно.
+  "dart.env": {
+    "PUB_HOSTED_URL": "https://pub.dev"
+  },
+
+  // Не показывать содержимое кэша fvm в поиске и не следить за ним.
+  "search.exclude": {
+    "**/.fvm": true
+  },
+  "files.watcherExclude": {
+    "**/.fvm": true
+  }
+}

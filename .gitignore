@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# FVM: машинно-зависимый кэш и симлинк SDK (пин версии живёт в .fvmrc, он коммитится)
+.fvm/
