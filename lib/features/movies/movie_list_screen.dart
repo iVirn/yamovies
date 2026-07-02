@@ -6,8 +6,23 @@ import 'movie.dart';
 import 'movie_card.dart';
 import 'movie_poster_assets.dart';
 
-class MovieListScreen extends StatelessWidget {
+class MovieListScreen extends StatefulWidget {
   const MovieListScreen({super.key});
+
+  @override
+  State<MovieListScreen> createState() => _MovieListScreenState();
+}
+
+class _MovieListScreenState extends State<MovieListScreen> {
+  final Set<int> _favoriteMovieIds = <int>{};
+
+  void _toggleFavorite(int movieId) {
+    setState(() {
+      if (!_favoriteMovieIds.add(movieId)) {
+        _favoriteMovieIds.remove(movieId);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +53,8 @@ class MovieListScreen extends StatelessWidget {
             movie: movie,
             genreNames: resolveMovieGenres(movie, genreNamesById),
             posterAssetPath: moviePosterAssets[movie.id],
+            isFavorite: _favoriteMovieIds.contains(movie.id),
+            onFavoriteTap: () => _toggleFavorite(movie.id),
           );
         },
       ),

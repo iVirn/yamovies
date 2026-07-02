@@ -46,6 +46,9 @@ void main() {
         (Movie movie) => moviePosterAssets[movie.id],
       ),
     );
+    expect(cards.every((MovieCard card) => !card.isFavorite), isTrue);
+    expect(find.byIcon(Icons.favorite_border), findsNWidgets(6));
+    expect(find.byIcon(Icons.favorite), findsNothing);
     expect(find.text('The Shawshank Redemption'), findsOneWidget);
     expect(find.text('Spirited Away'), findsOneWidget);
     final Text longTitle = tester.widget<Text>(
@@ -114,6 +117,8 @@ void main() {
               movie: movie,
               genreNames: genreNames,
               posterAssetPath: null,
+              isFavorite: false,
+              onFavoriteTap: () {},
             ),
           ),
         ),
@@ -123,6 +128,55 @@ void main() {
     expect(find.byIcon(Icons.movie_outlined), findsOneWidget);
     expect(find.text('—'), findsOneWidget);
     expect(find.text('Unknown'), findsOneWidget);
+  });
+
+  testWidgets('favorite state toggles one movie and survives reassemble', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MovieApp());
+
+    Finder firstFavoriteButton() => find.descendant(
+      of: find.byType(MovieCard).first,
+      matching: find.byType(IconButton),
+    );
+
+    expect(tester.getSize(firstFavoriteButton()), const Size(48, 48));
+
+    await tester.tap(firstFavoriteButton());
+    await tester.pump();
+
+    List<MovieCard> cards = tester
+        .widgetList<MovieCard>(find.byType(MovieCard))
+        .toList();
+    expect(cards.first.isFavorite, isTrue);
+    expect(cards.skip(1).every((MovieCard card) => !card.isFavorite), isTrue);
+    expect(find.byIcon(Icons.favorite), findsOneWidget);
+    expect(find.byIcon(Icons.favorite_border), findsNWidgets(5));
+
+    await tester.binding.reassembleApplication();
+    await tester.pump();
+
+    cards = tester.widgetList<MovieCard>(find.byType(MovieCard)).toList();
+    expect(cards.first.isFavorite, isTrue);
+
+    await tester.tap(firstFavoriteButton());
+    await tester.pump();
+
+    cards = tester.widgetList<MovieCard>(find.byType(MovieCard)).toList();
+    expect(cards.every((MovieCard card) => !card.isFavorite), isTrue);
+
+    await tester.tap(firstFavoriteButton());
+    await tester.pump();
+    await tester.pumpWidget(MovieApp(key: UniqueKey()));
+    await tester.pump();
+
+    cards = tester.widgetList<MovieCard>(find.byType(MovieCard)).toList();
+    expect(cards.every((MovieCard card) => !card.isFavorite), isTrue);
   });
 
   testWidgets('About and credits contains the TMDB attribution', (

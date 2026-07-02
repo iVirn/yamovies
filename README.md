@@ -1,10 +1,10 @@
 # YaMovies — Flutter lecture 1 demo
 
 This repository contains the tag-by-tag demo for the first Flutter lecture.
-`lecture-1-04-grid` renders all six prepared movies in fixture order with a
-two-column `GridView.builder`. `MovieListScreen` builds one genre lookup and
-passes resolved names and local poster paths to each stateless `MovieCard`.
-The catalog works offline and remains intentionally free of local state.
+`lecture-1-finish` adds the lecture's local-state checkpoint. Stateful
+`MovieListScreen` stores favorite movie ids in a `Set<int>` and rebuilds via
+`setState()`, while each `MovieCard` remains stateless and reports taps through
+a callback. Favorites are intentionally local and reset on app restart.
 
 ## Requirements
 

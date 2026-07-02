@@ -7,12 +7,16 @@ class MovieCard extends StatelessWidget {
     required this.movie,
     required this.genreNames,
     required this.posterAssetPath,
+    required this.isFavorite,
+    required this.onFavoriteTap,
     super.key,
   });
 
   final Movie movie;
   final List<String> genreNames;
   final String? posterAssetPath;
+  final bool isFavorite;
+  final VoidCallback onFavoriteTap;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +26,32 @@ class MovieCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          AspectRatio(aspectRatio: 2 / 3, child: _buildPoster()),
+          AspectRatio(
+            aspectRatio: 2 / 3,
+            child: Stack(
+              fit: StackFit.expand,
+              children: <Widget>[
+                _buildPoster(),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: IconButton.filledTonal(
+                    constraints: const BoxConstraints.tightFor(
+                      width: 48,
+                      height: 48,
+                    ),
+                    tooltip: isFavorite
+                        ? 'Remove from favorites'
+                        : 'Add to favorites',
+                    onPressed: onFavoriteTap,
+                    icon: Icon(
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
