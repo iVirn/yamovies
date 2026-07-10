@@ -7,7 +7,9 @@ import 'movie_card.dart';
 import 'movie_poster_assets.dart';
 
 class MovieListScreen extends StatefulWidget {
-  const MovieListScreen({super.key});
+  const MovieListScreen({this.assetPackage, super.key});
+
+  final String? assetPackage;
 
   @override
   State<MovieListScreen> createState() => _MovieListScreenState();
@@ -35,7 +37,9 @@ class _MovieListScreenState extends State<MovieListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Top Rated Movies'),
-        actions: const <Widget>[TmdbAttributionButton()],
+        actions: <Widget>[
+          TmdbAttributionButton(assetPackage: widget.assetPackage),
+        ],
       ),
       body: GridView.builder(
         padding: const EdgeInsets.all(16),
@@ -53,6 +57,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
             movie: movie,
             genreNames: resolveMovieGenres(movie, genreNamesById),
             posterAssetPath: moviePosterAssets[movie.id],
+            assetPackage: widget.assetPackage,
             isFavorite: _favoriteMovieIds.contains(movie.id),
             onFavoriteTap: () => _toggleFavorite(movie.id),
           );

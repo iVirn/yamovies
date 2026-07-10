@@ -158,7 +158,9 @@ void main() {
     expect(find.byIcon(Icons.favorite), findsOneWidget);
     expect(find.byIcon(Icons.favorite_border), findsNWidgets(5));
 
-    await tester.binding.reassembleApplication();
+    final StatefulElement movieListElement =
+        tester.element(find.byType(MovieListScreen)) as StatefulElement;
+    movieListElement.reassemble();
     await tester.pump();
 
     cards = tester.widgetList<MovieCard>(find.byType(MovieCard)).toList();
