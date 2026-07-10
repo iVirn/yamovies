@@ -4,7 +4,9 @@ const String tmdbAttributionNotice =
     'This product uses the TMDB API but is not endorsed or certified by TMDB.';
 
 class TmdbAttributionButton extends StatelessWidget {
-  const TmdbAttributionButton({super.key});
+  const TmdbAttributionButton({this.assetPackage, super.key});
+
+  final String? assetPackage;
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +19,7 @@ class TmdbAttributionButton extends StatelessWidget {
           applicationName: 'YaMovies',
           applicationIcon: Image.asset(
             'assets/branding/tmdb-logo.png',
+            package: assetPackage,
             width: 64,
             height: 64,
           ),

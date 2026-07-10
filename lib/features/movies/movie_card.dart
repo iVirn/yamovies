@@ -7,6 +7,7 @@ class MovieCard extends StatelessWidget {
     required this.movie,
     required this.genreNames,
     required this.posterAssetPath,
+    this.assetPackage,
     required this.isFavorite,
     required this.onFavoriteTap,
     super.key,
@@ -15,6 +16,7 @@ class MovieCard extends StatelessWidget {
   final Movie movie;
   final List<String> genreNames;
   final String? posterAssetPath;
+  final String? assetPackage;
   final bool isFavorite;
   final VoidCallback onFavoriteTap;
 
@@ -95,6 +97,7 @@ class MovieCard extends StatelessWidget {
 
     return Image.asset(
       assetPath,
+      package: assetPackage,
       fit: BoxFit.cover,
       semanticLabel: '${movie.title} poster',
       errorBuilder:

@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yamovies/features/movies/mock_tmdb_data.dart';
 import 'package:yamovies/features/movies/movie.dart';
@@ -79,9 +78,7 @@ void main() {
     }, json);
   });
 
-  testWidgets('poster manifest matches movies and bundled assets', (
-    WidgetTester tester,
-  ) async {
+  test('poster manifest matches movies and bundled assets', () async {
     final Map<String, Object?> manifest = await _readJsonObject(
       'test/fixtures/poster_manifest.json',
     );
@@ -99,16 +96,13 @@ void main() {
 
       expect(movie.posterPath, poster['poster_path']);
       expect(moviePosterAssets[movieId], expectedAsset);
-      expect(
-        (await rootBundle.load(expectedAsset)).lengthInBytes,
-        greaterThan(0),
-      );
+      expect(await File(expectedAsset).length(), greaterThan(0));
     }
   });
 
-  testWidgets('the approved TMDB logo is bundled', (WidgetTester tester) async {
+  test('the approved TMDB logo is bundled', () async {
     expect(
-      (await rootBundle.load('assets/branding/tmdb-logo.png')).lengthInBytes,
+      await File('assets/branding/tmdb-logo.png').length(),
       greaterThan(0),
     );
   });

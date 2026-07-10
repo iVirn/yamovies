@@ -1,23 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'features/movies/movie_list_screen.dart';
+import 'movie_app.dart';
+
+export 'movie_app.dart';
 
 void main() {
   runApp(const MovieApp());
-}
-
-class MovieApp extends StatelessWidget {
-  const MovieApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'YaMovies',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MovieListScreen(),
-    );
-  }
 }
