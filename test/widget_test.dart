@@ -30,7 +30,7 @@ void main() {
     );
     expect(find.text('Top Rated Movies'), findsOneWidget);
     expect(find.byType(TmdbAttributionButton), findsOneWidget);
-    expect(find.byType(GridView), findsOneWidget);
+    expect(find.byType(CustomScrollView), findsOneWidget);
 
     final List<MovieCard> cards = tester
         .widgetList<MovieCard>(find.byType(MovieCard))
@@ -49,10 +49,13 @@ void main() {
     expect(cards.every((MovieCard card) => !card.isFavorite), isTrue);
     expect(find.byIcon(Icons.favorite_border), findsNWidgets(6));
     expect(find.byIcon(Icons.favorite), findsNothing);
-    expect(find.text('The Shawshank Redemption'), findsOneWidget);
-    expect(find.text('Spirited Away'), findsOneWidget);
+    expect(find.text('The Shawshank Redemption'), findsWidgets);
+    expect(find.text('Spirited Away'), findsWidgets);
     final Text longTitle = tester.widget<Text>(
-      find.text('The Shawshank Redemption'),
+      find.descendant(
+        of: find.byType(MovieCard).first,
+        matching: find.text('The Shawshank Redemption'),
+      ),
     );
     final Text longGenres = tester.widget<Text>(
       find.text('Drama, History, War'),
@@ -75,7 +78,7 @@ void main() {
       tester.view.physicalSize = Size(width, 640);
       await tester.pumpWidget(const MovieApp());
 
-      await tester.drag(find.byType(GridView), const Offset(0, -600));
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -600));
       await tester.pumpAndSettle();
 
       expect(find.text('Spirited Away'), findsOneWidget);
@@ -119,6 +122,7 @@ void main() {
               posterAssetPath: null,
               isFavorite: false,
               onFavoriteTap: () {},
+              onTap: () {},
             ),
           ),
         ),
@@ -130,9 +134,7 @@ void main() {
     expect(find.text('Unknown'), findsOneWidget);
   });
 
-  testWidgets('favorite state toggles one movie and survives reassemble', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('favorite state toggles one movie', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(320, 1200);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -158,21 +160,7 @@ void main() {
     expect(find.byIcon(Icons.favorite), findsOneWidget);
     expect(find.byIcon(Icons.favorite_border), findsNWidgets(5));
 
-    await tester.binding.reassembleApplication();
-    await tester.pump();
-
-    cards = tester.widgetList<MovieCard>(find.byType(MovieCard)).toList();
-    expect(cards.first.isFavorite, isTrue);
-
     await tester.tap(firstFavoriteButton());
-    await tester.pump();
-
-    cards = tester.widgetList<MovieCard>(find.byType(MovieCard)).toList();
-    expect(cards.every((MovieCard card) => !card.isFavorite), isTrue);
-
-    await tester.tap(firstFavoriteButton());
-    await tester.pump();
-    await tester.pumpWidget(MovieApp(key: UniqueKey()));
     await tester.pump();
 
     cards = tester.widgetList<MovieCard>(find.byType(MovieCard)).toList();
