@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'movie.dart';
+import 'movie_formatters.dart';
 
 class MovieCard extends StatelessWidget {
   const MovieCard({
@@ -9,6 +10,7 @@ class MovieCard extends StatelessWidget {
     required this.posterAssetPath,
     required this.isFavorite,
     required this.onFavoriteTap,
+    required this.onTap,
     super.key,
   });
 
@@ -17,72 +19,88 @@ class MovieCard extends StatelessWidget {
   final String? posterAssetPath;
   final bool isFavorite;
   final VoidCallback onFavoriteTap;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          AspectRatio(
-            aspectRatio: 2 / 3,
-            child: Stack(
-              fit: StackFit.expand,
-              children: <Widget>[
-                _buildPoster(),
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: IconButton.filledTonal(
-                    constraints: const BoxConstraints.tightFor(
-                      width: 48,
-                      height: 48,
-                    ),
-                    tooltip: isFavorite
-                        ? 'Remove from favorites'
-                        : 'Add to favorites',
-                    onPressed: onFavoriteTap,
-                    icon: Icon(
-                      isFavorite ? Icons.favorite : Icons.favorite_border,
+      elevation: 1,
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: <Widget>[
+                  _buildPoster(),
+                  const _PosterGradient(),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton.filledTonal(
+                      constraints: const BoxConstraints.tightFor(
+                        width: 44,
+                        height: 44,
+                      ),
+                      tooltip: isFavorite
+                          ? 'Remove from favorites'
+                          : 'Add to favorites',
+                      onPressed: onFavoriteTap,
+                      icon: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: isFavorite ? Colors.redAccent : null,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  Positioned(
+                    left: 10,
+                    bottom: 10,
+                    child: _RatingBadge(rating: movie.voteAverage),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  movie.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: <Widget>[
-                    Expanded(child: Text(_releaseYear)),
-                    const Icon(Icons.star, size: 16),
-                    const SizedBox(width: 4),
-                    Text(movie.voteAverage.toStringAsFixed(1)),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  genreNames.isEmpty ? 'Unknown' : genreNames.join(', '),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    movie.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: <Widget>[
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        size: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        releaseYear(movie),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    formatGenreNames(genreNames),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -90,7 +108,7 @@ class MovieCard extends StatelessWidget {
   Widget _buildPoster() {
     final String? assetPath = posterAssetPath;
     if (assetPath == null) {
-      return const _PosterFallback();
+      return const PosterFallback();
     }
 
     return Image.asset(
@@ -99,29 +117,78 @@ class MovieCard extends StatelessWidget {
       semanticLabel: '${movie.title} poster',
       errorBuilder:
           (BuildContext context, Object error, StackTrace? stackTrace) =>
-              const _PosterFallback(),
+              const PosterFallback(),
     );
-  }
-
-  String get _releaseYear {
-    final String? releaseDate = movie.releaseDate;
-    if (releaseDate == null) {
-      return '—';
-    }
-
-    return DateTime.tryParse(releaseDate)?.year.toString() ?? '—';
   }
 }
 
-class _PosterFallback extends StatelessWidget {
-  const _PosterFallback();
+class _PosterGradient extends StatelessWidget {
+  const _PosterGradient();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      alignment: Alignment.center,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: <Color>[
+            Colors.black.withValues(alpha: 0.08),
+            Colors.black.withValues(alpha: 0.55),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RatingBadge extends StatelessWidget {
+  const _RatingBadge({required this.rating});
+
+  final double rating;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Icon(Icons.star, size: 14, color: Colors.amber),
+            const SizedBox(width: 4),
+            Text(
+              rating.toStringAsFixed(1),
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class PosterFallback extends StatelessWidget {
+  const PosterFallback({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: const Icon(Icons.movie_outlined, size: 48),
+      child: Center(
+        child: Icon(
+          Icons.movie_outlined,
+          size: 48,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
     );
   }
 }
