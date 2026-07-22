@@ -15,6 +15,7 @@ class MovieApp extends StatelessWidget {
       title: 'YaMovies',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        cardTheme: const CardThemeData(margin: EdgeInsets.zero),
         useMaterial3: true,
       ),
       home: const MovieListScreen(),
