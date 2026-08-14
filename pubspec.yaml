@@ -30,6 +30,10 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
+  movie_database:
+    path: modules/movie_database
+  movie_network:
+    path: modules/movie_network
 
 dev_dependencies:
   flutter_test:

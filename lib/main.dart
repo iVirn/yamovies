@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-// import 'package:yamovies/data/database.dart';
-// import 'package:yamovies/data/http_client.dart';
+// import 'package:movie_database/movie_database.dart';
+// import 'package:movie_network/movie_network.dart';
 import 'package:yamovies/data/movie_repository.dart';
 import 'package:yamovies/dependency_injection/dependency_container/dependency_container.dart';
 import 'package:yamovies/dependency_injection/dependency_container/dependency_scope.dart';

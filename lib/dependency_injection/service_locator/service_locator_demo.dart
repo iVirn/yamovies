@@ -1,14 +1,14 @@
 // ignore_for_file: avoid_print
 
+import 'package:movie_database/movie_database.dart';
+import 'package:movie_network/movie_network.dart';
 import 'package:yamovies/dependency_injection/service_locator/service_locator.dart';
 
-import '../../data/database.dart';
-import '../../data/http_client.dart';
 import '../../data/movie_repository.dart';
 
 void main() {
-  locator.register<HttpClient>(const NetworkHttpClient());
-  locator.register<Database>(const SqliteDatabase());
+  locator.register<HttpClient>(HttpClient.create(HttpClientType.network));
+  locator.register<Database>(Database.create(DatabaseType.sqlite));
   locator.register<MovieRepository>(
     MovieRepositoryImpl(
       httpClient: locator.get<HttpClient>(),

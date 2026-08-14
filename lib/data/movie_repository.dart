@@ -1,7 +1,8 @@
+import 'package:movie_database/movie_database.dart';
+import 'package:movie_network/movie_network.dart';
+
 import '../domain/movie.dart';
 import '../domain/tmdb_responses.dart';
-import 'database.dart';
-import 'http_client.dart';
 
 abstract interface class MovieRepository {
   const MovieRepository();
