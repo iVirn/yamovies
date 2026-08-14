@@ -1,32 +1,32 @@
+// ignore_for_file: prefer_initializing_formals
+
 import 'package:bloc/bloc.dart';
-import 'package:flutter/foundation.dart';
+
+import '../../../../data/movie_repository.dart';
+import '../../../../domain/movie.dart';
 
 part 'movie_details_event.dart';
 part 'movie_details_state.dart';
 
 class MovieDetailsBloc extends Bloc<MovieDetailsEvent, MovieDetailsState> {
-  MovieDetailsBloc({
-    required bool isFavorite,
-    required VoidCallback onFavoriteTap,
-  }) : _onFavoriteTap = onFavoriteTap, // ignore: prefer_initializing_formals
-       super(
-         isFavorite
-             ? const MovieDetailsFavoriteState()
-             : const MovieDetailsNotFavoriteState(),
-       ) {
-    on<MovieDetailsFavoriteToggled>(_onFavoriteToggled);
+  MovieDetailsBloc({required MovieRepository repository, required int movieId})
+    : _repository = repository,
+      _movieId = movieId,
+      super(const MovieDetailsLoadingState()) {
+    on<MovieDetailsStarted>(_onStarted);
   }
 
-  final VoidCallback _onFavoriteTap;
+  final MovieRepository _repository;
+  final int _movieId;
 
-  void _onFavoriteToggled(
-    MovieDetailsFavoriteToggled event,
+  Future<void> _onStarted(
+    MovieDetailsStarted event,
     Emitter<MovieDetailsState> emit,
-  ) {
-    _onFavoriteTap();
-    emit(switch (state) {
-      MovieDetailsFavoriteState() => const MovieDetailsNotFavoriteState(),
-      MovieDetailsNotFavoriteState() => const MovieDetailsFavoriteState(),
-    });
+  ) async {
+    emit(const MovieDetailsLoadingState());
+
+    final Movie movie = await _repository.getMovieById(_movieId);
+
+    emit(MovieDetailsSuccessState(movie: movie));
   }
 }

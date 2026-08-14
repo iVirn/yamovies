@@ -4,10 +4,12 @@ sealed class MovieDetailsState {
   const MovieDetailsState();
 }
 
-final class MovieDetailsFavoriteState extends MovieDetailsState {
-  const MovieDetailsFavoriteState();
+final class MovieDetailsLoadingState extends MovieDetailsState {
+  const MovieDetailsLoadingState();
 }
 
-final class MovieDetailsNotFavoriteState extends MovieDetailsState {
-  const MovieDetailsNotFavoriteState();
+final class MovieDetailsSuccessState extends MovieDetailsState {
+  const MovieDetailsSuccessState({required this.movie});
+
+  final Movie movie;
 }

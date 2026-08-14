@@ -5,6 +5,9 @@ class _MovieListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final MovieListController controller =
+        ControllerScope.of<MovieListController>(context, listen: false);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Top Rated Movies'),
@@ -19,7 +22,12 @@ class _MovieListView extends StatelessWidget {
             MovieListLoadingState() => const Center(
               child: CircularProgressIndicator(),
             ),
-            MovieListSuccessState() => _MovieListContent(state: state),
+            MovieListSuccessState success => ListenableBuilder(
+              listenable: controller,
+              builder: (BuildContext context, Widget? child) {
+                return _MovieListContent(state: success, controller: controller);
+              },
+            ),
           };
         },
       ),

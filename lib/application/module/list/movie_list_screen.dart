@@ -10,9 +10,9 @@ import '../../../utils/movie_filters.dart';
 import '../../../utils/movie_formatters.dart';
 import '../../../utils/movie_poster_assets.dart';
 import '../../../utils/tmdb_attribution.dart';
-import '../details/movie_details_screen.dart';
-import '../filters/genre_filter_sheet.dart';
+import '../../controller_scope.dart';
 import 'bloc/movie_list_bloc.dart';
+import 'movie_list_controller.dart';
 
 part '_movie_card.dart';
 part '_movie_filters_header.dart';
@@ -27,8 +27,27 @@ part '_top_movie_poster.dart';
 part '_top_movie_tile.dart';
 part '_top_movies_gallery.dart';
 
-class MovieListScreen extends StatelessWidget {
+class MovieListScreen extends StatefulWidget {
   const MovieListScreen({super.key});
+
+  @override
+  State<MovieListScreen> createState() => _MovieListScreenState();
+}
+
+class _MovieListScreenState extends State<MovieListScreen> {
+  late final MovieListController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = MovieListController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +55,10 @@ class MovieListScreen extends StatelessWidget {
       create: (BuildContext context) => MovieListBloc(
         repository: DependencyScope.of(context).movieRepository,
       )..add(const MovieListStarted()),
-      child: const _MovieListView(),
+      child: ControllerScope<MovieListController>(
+        controller: _controller,
+        child: const _MovieListView(),
+      ),
     );
   }
 }

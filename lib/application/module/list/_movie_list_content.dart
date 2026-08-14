@@ -1,69 +1,18 @@
 part of 'movie_list_screen.dart';
 
 class _MovieListContent extends StatelessWidget {
-  const _MovieListContent({required this.state});
+  const _MovieListContent({required this.state, required this.controller});
 
   final MovieListSuccessState state;
-
-  void _openGenreFilters(BuildContext context) {
-    final MovieListBloc bloc = context.read<MovieListBloc>();
-
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (BuildContext sheetContext) {
-        return BlocProvider<MovieListBloc>.value(
-          value: bloc,
-          child: BlocBuilder<MovieListBloc, MovieListState>(
-            builder: (BuildContext context, MovieListState state) {
-              return switch (state) {
-                MovieListLoadingState() => const SizedBox.shrink(),
-                MovieListSuccessState success => GenreFilterSheet(
-                  genres: success.genres,
-                  selectedGenreIds: success.selectedGenreIds,
-                  onGenreTap: (int genreId) => context.read<MovieListBloc>().add(
-                    MovieListGenreToggled(genreId),
-                  ),
-                  onClear: () => context.read<MovieListBloc>().add(
-                    const MovieListGenresCleared(),
-                  ),
-                ),
-              };
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  void _openMovieDetails(BuildContext context, Movie movie) {
-    final MovieListBloc bloc = context.read<MovieListBloc>();
-    final List<String> genreNames = resolveMovieGenres(
-      movie,
-      state.genreNamesById,
-    );
-
-    Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) {
-          return MovieDetailsScreen(
-            movie: movie,
-            genreNames: genreNames,
-            posterAssetPath: moviePosterAssets[movie.id],
-            isFavorite: state.isFavorite(movie.id),
-            onFavoriteTap: () => bloc.add(MovieListFavoriteToggled(movie.id)),
-          );
-        },
-      ),
-    );
-  }
+  final MovieListController controller;
 
   @override
   Widget build(BuildContext context) {
     final List<Movie> movies = state.movies;
-    final Map<int, String> genreNamesById = state.genreNamesById;
-    final List<Movie> filteredMovies = state.filteredMovies;
-    final List<Genre> selectedGenres = state.selectedGenres;
+    final List<Genre> genres = state.genres;
+    final Map<int, String> genreNamesById = controller.genreNamesById(genres);
+    final List<Movie> filteredMovies = controller.filteredMovies(movies);
+    final List<Genre> selectedGenres = controller.selectedGenres(genres);
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
@@ -76,30 +25,23 @@ class _MovieListContent extends StatelessWidget {
                 movies: movies,
                 genreNamesById: genreNamesById,
                 posterAssets: moviePosterAssets,
-                onMovieTap: (Movie movie) => _openMovieDetails(context, movie),
+                onMovieTap: (Movie movie) =>
+                    controller.openMovieDetails(context, movie, genres),
               ),
             ),
             SliverToBoxAdapter(
               child: _MovieFiltersHeader(
                 moviesCount: filteredMovies.length,
                 selectedGenres: selectedGenres,
-                onOpenFilters: () => _openGenreFilters(context),
-                onClearFilters: () => context.read<MovieListBloc>().add(
-                  const MovieListGenresCleared(),
-                ),
-                onRemoveGenre: (int genreId) => context.read<MovieListBloc>().add(
-                  MovieListGenreToggled(genreId),
-                ),
+                onOpenFilters: () => controller.openFilters(context, genres),
+                onClearFilters: controller.clearGenres,
+                onRemoveGenre: controller.toggleGenre,
               ),
             ),
             if (filteredMovies.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
-                child: _MoviesEmptyState(
-                  onClearFilters: () => context.read<MovieListBloc>().add(
-                    const MovieListGenresCleared(),
-                  ),
-                ),
+                child: _MoviesEmptyState(onClearFilters: controller.clearGenres),
               )
             else
               SliverPadding(
@@ -119,11 +61,10 @@ class _MovieListContent extends StatelessWidget {
                       movie: movie,
                       genreNames: resolveMovieGenres(movie, genreNamesById),
                       posterAssetPath: moviePosterAssets[movie.id],
-                      isFavorite: state.isFavorite(movie.id),
-                      onFavoriteTap: () => context.read<MovieListBloc>().add(
-                        MovieListFavoriteToggled(movie.id),
-                      ),
-                      onTap: () => _openMovieDetails(context, movie),
+                      isFavorite: controller.isFavorite(movie.id),
+                      onFavoriteTap: () => controller.toggleFavorite(movie.id),
+                      onTap: () =>
+                          controller.openMovieDetails(context, movie, genres),
                     );
                   },
                 ),

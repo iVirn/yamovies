@@ -5,17 +5,16 @@ class _DetailsFavoriteButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<MovieDetailsBloc, MovieDetailsState>(
-      builder: (BuildContext context, MovieDetailsState state) {
-        final bool isFavorite = switch (state) {
-          MovieDetailsFavoriteState() => true,
-          MovieDetailsNotFavoriteState() => false,
-        };
+    final MovieDetailsController controller =
+        ControllerScope.of<MovieDetailsController>(context, listen: false);
+
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (BuildContext context, Widget? child) {
+        final bool isFavorite = controller.isFavorite;
 
         return FilledButton.icon(
-          onPressed: () => context.read<MovieDetailsBloc>().add(
-            const MovieDetailsFavoriteToggled(),
-          ),
+          onPressed: controller.toggleFavorite,
           icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
           label: Text(
             isFavorite ? 'Remove from favorites' : 'Add to favorites',

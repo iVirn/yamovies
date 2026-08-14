@@ -9,6 +9,8 @@ abstract interface class MovieRepository {
   Future<MoviesPageResponse> getMovies();
 
   Future<MovieGenresResponse> getGenres();
+
+  Future<Movie> getMovieById(int id);
 }
 
 final class MovieRepositoryImpl implements MovieRepository {
@@ -22,6 +24,9 @@ final class MovieRepositoryImpl implements MovieRepository {
 
   @override
   Future<MovieGenresResponse> getGenres() async => throw UnimplementedError();
+
+  @override
+  Future<Movie> getMovieById(int id) async => throw UnimplementedError();
 }
 
 final class MovieRepositoryMock implements MovieRepository {
@@ -32,6 +37,12 @@ final class MovieRepositoryMock implements MovieRepository {
 
   @override
   Future<MovieGenresResponse> getGenres() async => _mockMovieGenresResponse;
+
+  @override
+  Future<Movie> getMovieById(int id) async =>
+      _mockTopRatedMoviesResponse.results.firstWhere(
+        (Movie movie) => movie.id == id,
+      );
 }
 
 const MoviesPageResponse _mockTopRatedMoviesResponse = MoviesPageResponse(

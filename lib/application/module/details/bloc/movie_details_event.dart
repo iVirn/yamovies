@@ -4,6 +4,6 @@ sealed class MovieDetailsEvent {
   const MovieDetailsEvent();
 }
 
-final class MovieDetailsFavoriteToggled extends MovieDetailsEvent {
-  const MovieDetailsFavoriteToggled();
+final class MovieDetailsStarted extends MovieDetailsEvent {
+  const MovieDetailsStarted();
 }
