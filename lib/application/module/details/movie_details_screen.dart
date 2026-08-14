@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../components/poster_fallback.dart';
 import '../../../domain/movie.dart';
 import '../../../utils/movie_formatters.dart';
-import '../../view_model_scope.dart';
-import 'movie_details_view_model.dart';
+import 'bloc/movie_details_bloc.dart';
 
 part '_details_favorite_action.dart';
 part '_details_favorite_button.dart';
@@ -14,7 +14,7 @@ part '_meta_pill.dart';
 part '_movie_details_view.dart';
 part '_overview_text.dart';
 
-class MovieDetailsScreen extends StatefulWidget {
+class MovieDetailsScreen extends StatelessWidget {
   const MovieDetailsScreen({
     required this.movie,
     required this.genreNames,
@@ -31,35 +31,16 @@ class MovieDetailsScreen extends StatefulWidget {
   final VoidCallback onFavoriteTap;
 
   @override
-  State<MovieDetailsScreen> createState() => _MovieDetailsScreenState();
-}
-
-class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
-  late final MovieDetailsViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = MovieDetailsViewModel(
-      isFavorite: widget.isFavorite,
-      onFavoriteTap: widget.onFavoriteTap,
-    );
-  }
-
-  @override
-  void dispose() {
-    _viewModel.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return ViewModelScope<MovieDetailsViewModel>(
-      viewModel: _viewModel,
+    return BlocProvider<MovieDetailsBloc>(
+      create: (BuildContext context) => MovieDetailsBloc(
+        isFavorite: isFavorite,
+        onFavoriteTap: onFavoriteTap,
+      ),
       child: _MovieDetailsView(
-        movie: widget.movie,
-        genreNames: widget.genreNames,
-        posterAssetPath: widget.posterAssetPath,
+        movie: movie,
+        genreNames: genreNames,
+        posterAssetPath: posterAssetPath,
       ),
     );
   }

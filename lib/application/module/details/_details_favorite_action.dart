@@ -5,17 +5,18 @@ class _DetailsFavoriteAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final MovieDetailsViewModel viewModel =
-        ViewModelScope.of<MovieDetailsViewModel>(context, listen: false);
-
-    return ListenableBuilder(
-      listenable: viewModel,
-      builder: (BuildContext context, Widget? child) {
-        final bool isFavorite = viewModel.isFavorite;
+    return BlocBuilder<MovieDetailsBloc, MovieDetailsState>(
+      builder: (BuildContext context, MovieDetailsState state) {
+        final bool isFavorite = switch (state) {
+          MovieDetailsFavoriteState() => true,
+          MovieDetailsNotFavoriteState() => false,
+        };
 
         return IconButton.filledTonal(
           tooltip: isFavorite ? 'Remove from favorites' : 'Add to favorites',
-          onPressed: viewModel.toggleFavorite,
+          onPressed: () => context.read<MovieDetailsBloc>().add(
+            const MovieDetailsFavoriteToggled(),
+          ),
           icon: Icon(
             isFavorite ? Icons.favorite : Icons.favorite_border,
             color: isFavorite ? Colors.redAccent : null,
