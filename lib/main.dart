@@ -1,24 +1,21 @@
 import 'package:flutter/material.dart';
-
-import 'features/movies/movie_list_screen.dart';
+// import 'package:movie_database/movie_database.dart';
+// import 'package:movie_network/movie_network.dart';
+import 'package:yamovies/data/movie_repository.dart';
+import 'package:yamovies/dependency_injection/dependency_container/dependency_container.dart';
+import 'package:yamovies/dependency_injection/dependency_container/dependency_scope.dart';
+import 'package:yamovies/application/movie_app.dart';
 
 void main() {
-  runApp(const MovieApp());
-}
+  // final httpClient = NetworkHttpClient();
+  // final database = SqliteDatabase();
+  // final movieRepository = MovieRepositoryImpl(
+  //   httpClient: httpClient,
+  //   database: database,
+  // );
+  final movieRepository = const MovieRepositoryMock();
 
-class MovieApp extends StatelessWidget {
-  const MovieApp({super.key});
+  final container = DependencyContainer(movieRepository: movieRepository);
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'YaMovies',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        cardTheme: const CardThemeData(margin: EdgeInsets.zero),
-        useMaterial3: true,
-      ),
-      home: const MovieListScreen(),
-    );
-  }
+  runApp(DependencyScope(container: container, child: const MovieApp()));
 }

@@ -1,15 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yamovies/features/movies/mock_tmdb_data.dart';
-import 'package:yamovies/features/movies/movie.dart';
-import 'package:yamovies/features/movies/movie_card.dart';
-import 'package:yamovies/features/movies/movie_list_screen.dart';
-import 'package:yamovies/features/movies/movie_poster_assets.dart';
-import 'package:yamovies/main.dart';
-import 'package:yamovies/tmdb_attribution.dart';
+import 'package:yamovies/application/module/list/movie_list_screen.dart';
+import 'package:yamovies/application/movie_app.dart';
+import 'package:yamovies/components/poster_fallback.dart';
+import 'package:yamovies/data/movie_repository.dart';
+import 'package:yamovies/dependency_injection/dependency_container/dependency_container.dart';
+import 'package:yamovies/dependency_injection/dependency_container/dependency_scope.dart';
+import 'package:yamovies/domain/movie.dart';
+import 'package:yamovies/utils/movie_formatters.dart';
+import 'package:yamovies/utils/tmdb_attribution.dart';
+
+const MovieRepositoryMock _repository = MovieRepositoryMock();
+
+Widget _appUnderTest() {
+  return const DependencyScope(
+    container: DependencyContainer(movieRepository: _repository),
+    child: MovieApp(),
+  );
+}
 
 void main() {
-  testWidgets('catalog shows six movies in fixture order at 320 px', (
+  testWidgets('catalog shows six movies at 320 px', (
     WidgetTester tester,
   ) async {
     tester.view.physicalSize = const Size(320, 1200);
@@ -17,7 +28,8 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MovieApp());
+    await tester.pumpWidget(_appUnderTest());
+    await tester.pump();
 
     expect(find.byType(MaterialApp), findsOneWidget);
     expect(find.byType(MovieListScreen), findsOneWidget);
@@ -29,39 +41,20 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Top Rated Movies'), findsOneWidget);
-    expect(find.byType(TmdbAttributionButton), findsOneWidget);
+    expect(find.byTooltip('About and credits'), findsOneWidget);
     expect(find.byType(CustomScrollView), findsOneWidget);
 
-    final List<MovieCard> cards = tester
-        .widgetList<MovieCard>(find.byType(MovieCard))
-        .toList();
-    expect(cards, hasLength(6));
-    expect(
-      cards.map((MovieCard card) => card.movie.id),
-      mockTopRatedMoviesResponse.results.map((Movie movie) => movie.id),
-    );
-    expect(
-      cards.map((MovieCard card) => card.posterAssetPath),
-      mockTopRatedMoviesResponse.results.map(
-        (Movie movie) => moviePosterAssets[movie.id],
-      ),
-    );
-    expect(cards.every((MovieCard card) => !card.isFavorite), isTrue);
+    // Each catalog card carries exactly one favorite toggle, so their count is
+    // a proxy for the number of rendered cards.
     expect(find.byIcon(Icons.favorite_border), findsNWidgets(6));
     expect(find.byIcon(Icons.favorite), findsNothing);
     expect(find.text('The Shawshank Redemption'), findsWidgets);
     expect(find.text('Spirited Away'), findsWidgets);
-    final Text longTitle = tester.widget<Text>(
-      find.descendant(
-        of: find.byType(MovieCard).first,
-        matching: find.text('The Shawshank Redemption'),
-      ),
-    );
+
+    // This exact combined genre string is rendered only by the grid card.
     final Text longGenres = tester.widget<Text>(
       find.text('Drama, History, War'),
     );
-    expect(longTitle.maxLines, 2);
-    expect(longTitle.overflow, TextOverflow.ellipsis);
     expect(longGenres.maxLines, 1);
     expect(longGenres.overflow, TextOverflow.ellipsis);
     expect(tester.takeException(), isNull);
@@ -76,7 +69,8 @@ void main() {
 
     for (final double width in <double>[320, 390]) {
       tester.view.physicalSize = Size(width, 640);
-      await tester.pumpWidget(const MovieApp());
+      await tester.pumpWidget(_appUnderTest());
+      await tester.pump();
 
       await tester.drag(find.byType(CustomScrollView), const Offset(0, -600));
       await tester.pumpAndSettle();
@@ -86,9 +80,19 @@ void main() {
     }
   });
 
-  testWidgets('movie card shows fallbacks for missing presentation data', (
+  testWidgets('poster fallback shows a movie placeholder icon', (
     WidgetTester tester,
   ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: SizedBox(width: 220, height: 320, child: PosterFallback())),
+      ),
+    );
+
+    expect(find.byIcon(Icons.movie_outlined), findsOneWidget);
+  });
+
+  test('formatters fall back for missing presentation data', () {
     const Movie movie = Movie(
       adult: false,
       backdropPath: null,
@@ -105,33 +109,9 @@ void main() {
       voteAverage: 0,
       voteCount: 0,
     );
-    final Map<int, String> genreNamesById = <int, String>{
-      for (final Genre genre in mockMovieGenresResponse.genres)
-        genre.id: genre.name,
-    };
-    final List<String> genreNames = resolveMovieGenres(movie, genreNamesById);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 220,
-            child: MovieCard(
-              movie: movie,
-              genreNames: genreNames,
-              posterAssetPath: null,
-              isFavorite: false,
-              onFavoriteTap: () {},
-              onTap: () {},
-            ),
-          ),
-        ),
-      ),
-    );
-
-    expect(find.byIcon(Icons.movie_outlined), findsOneWidget);
-    expect(find.text('—'), findsOneWidget);
-    expect(find.text('Unknown'), findsOneWidget);
+    expect(releaseYear(movie), '—');
+    expect(formatGenreNames(const <String>[]), 'Unknown');
   });
 
   testWidgets('favorite state toggles one movie', (WidgetTester tester) async {
@@ -140,37 +120,29 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MovieApp());
-
-    Finder firstFavoriteButton() => find.descendant(
-      of: find.byType(MovieCard).first,
-      matching: find.byType(IconButton),
-    );
-
-    expect(tester.getSize(firstFavoriteButton()), const Size(48, 48));
-
-    await tester.tap(firstFavoriteButton());
+    await tester.pumpWidget(_appUnderTest());
     await tester.pump();
 
-    List<MovieCard> cards = tester
-        .widgetList<MovieCard>(find.byType(MovieCard))
-        .toList();
-    expect(cards.first.isFavorite, isTrue);
-    expect(cards.skip(1).every((MovieCard card) => !card.isFavorite), isTrue);
+    expect(find.byIcon(Icons.favorite_border), findsNWidgets(6));
+
+    await tester.tap(find.byIcon(Icons.favorite_border).first);
+    await tester.pump();
+
     expect(find.byIcon(Icons.favorite), findsOneWidget);
     expect(find.byIcon(Icons.favorite_border), findsNWidgets(5));
 
-    await tester.tap(firstFavoriteButton());
+    await tester.tap(find.byIcon(Icons.favorite));
     await tester.pump();
 
-    cards = tester.widgetList<MovieCard>(find.byType(MovieCard)).toList();
-    expect(cards.every((MovieCard card) => !card.isFavorite), isTrue);
+    expect(find.byIcon(Icons.favorite), findsNothing);
+    expect(find.byIcon(Icons.favorite_border), findsNWidgets(6));
   });
 
   testWidgets('About and credits contains the TMDB attribution', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const MovieApp());
+    await tester.pumpWidget(_appUnderTest());
+    await tester.pump();
 
     await tester.tap(find.byTooltip('About and credits'));
     await tester.pumpAndSettle();

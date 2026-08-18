@@ -2,9 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yamovies/features/movies/mock_tmdb_data.dart';
-import 'package:yamovies/features/movies/movie.dart';
-import 'package:yamovies/features/movies/movie_poster_assets.dart';
+import 'package:yamovies/data/movie_repository.dart';
+import 'package:yamovies/domain/movie.dart';
+import 'package:yamovies/domain/tmdb_responses.dart';
+import 'package:yamovies/utils/movie_poster_assets.dart';
+
+const MovieRepositoryMock _repository = MovieRepositoryMock();
 
 const Set<String> _movieWireKeys = <String>{
   'adult',
@@ -27,6 +30,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('typed movie fixture matches the API-shaped JSON fixture', () async {
+    final MoviesPageResponse moviesResponse = await _repository.getMovies();
     final Map<String, Object?> json = await _readJsonObject(
       'test/fixtures/tmdb_top_rated.en-US.json',
     );
@@ -52,22 +56,21 @@ void main() {
     }
 
     expect(<String, Object?>{
-      'page': mockTopRatedMoviesResponse.page,
-      'results': mockTopRatedMoviesResponse.results
-          .map(_movieToWireJson)
-          .toList(),
-      'total_pages': mockTopRatedMoviesResponse.totalPages,
-      'total_results': mockTopRatedMoviesResponse.totalResults,
+      'page': moviesResponse.page,
+      'results': moviesResponse.results.map(_movieToWireJson).toList(),
+      'total_pages': moviesResponse.totalPages,
+      'total_results': moviesResponse.totalResults,
     }, json);
   });
 
   test('typed genre fixture matches the API-shaped JSON fixture', () async {
+    final MovieGenresResponse genresResponse = await _repository.getGenres();
     final Map<String, Object?> json = await _readJsonObject(
       'test/fixtures/movie_genres.en.json',
     );
 
     expect(<String, Object?>{
-      'genres': mockMovieGenresResponse.genres
+      'genres': genresResponse.genres
           .map(
             (Genre genre) => <String, Object?>{
               'id': genre.id,
@@ -79,17 +82,18 @@ void main() {
   });
 
   test('poster manifest matches movies and bundled assets', () async {
+    final MoviesPageResponse moviesResponse = await _repository.getMovies();
     final Map<String, Object?> manifest = await _readJsonObject(
       'test/fixtures/poster_manifest.json',
     );
     final List<Object?> posters = manifest['posters']! as List<Object?>;
 
-    expect(posters, hasLength(mockTopRatedMoviesResponse.results.length));
+    expect(posters, hasLength(moviesResponse.results.length));
 
     for (final Object? item in posters) {
       final Map<String, Object?> poster = item! as Map<String, Object?>;
       final int movieId = poster['movie_id']! as int;
-      final Movie movie = mockTopRatedMoviesResponse.results.singleWhere(
+      final Movie movie = moviesResponse.results.singleWhere(
         (Movie movie) => movie.id == movieId,
       );
       final String expectedAsset = 'assets/${poster['local_asset']! as String}';
