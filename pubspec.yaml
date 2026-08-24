@@ -26,8 +26,14 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  bloc: ^9.2.1
   flutter:
     sdk: flutter
+  flutter_bloc: ^9.1.1
+  movie_database:
+    path: modules/movie_database
+  movie_network:
+    path: modules/movie_network
 
 dev_dependencies:
   flutter_test:

@@ -1,0 +1,10 @@
+name: movie_network
+description: Network layer entities for the YaMovies lecture app.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  dio: ^5.0.0

@@ -18,5 +18,12 @@
   },
   "files.watcherExclude": {
     "**/.fvm": true
+  },
+
+  // Форматировать код при сохранении.
+  "editor.formatOnSave": true,
+  "[dart]": {
+    "editor.defaultFormatter": "Dart-Code.dart-code",
+    "editor.formatOnSave": true
   }
 }
