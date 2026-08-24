@@ -18,13 +18,15 @@ class _DemoPanelSection extends StatelessWidget {
         child: ExpansionTile(
           leading: const Icon(Icons.science_outlined),
           title: const Text('Lecture demos'),
-          subtitle: const Text('Isolate, subscriptions'),
+          subtitle: const Text('Isolate, subscriptions, outbox'),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             _CatalogStatsPanel(movies: movies, controller: controller),
             const Divider(height: 32),
             const _LeakProbePanel(),
+            const Divider(height: 32),
+            const _OutboxPanel(),
           ],
         ),
       ),

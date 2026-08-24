@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
@@ -9,7 +11,15 @@ part 'app_database.g.dart';
 ///
 /// `NativeDatabase.memory()` в тестах даёт настоящую БД без единого файла:
 /// запросы, миграции и реактивность проверяются по-настоящему.
-@DriftDatabase(tables: <Type>[CachedMovies, CachedGenres, SyncMeta])
+@DriftDatabase(
+  tables: <Type>[
+    CachedMovies,
+    CachedGenres,
+    SyncMeta,
+    FavoriteMovies,
+    PendingOps,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'yamovies_cache'));
@@ -72,6 +82,117 @@ class AppDatabase extends _$AppDatabase {
 
     return row.read(count) ?? 0;
   }
+
+  // --- Избранное и очередь изменений -------------------------------------
+
+  Stream<Set<int>> watchFavoriteIds() => select(favoriteMovies).watch().map(
+    (List<FavoriteMovie> rows) => <int>{
+      for (final FavoriteMovie row in rows) row.movieId,
+    },
+  );
+
+  Future<Set<int>> readFavoriteIds() async {
+    final List<FavoriteMovie> rows = await select(favoriteMovies).get();
+
+    return <int>{for (final FavoriteMovie row in rows) row.movieId};
+  }
+
+  /// Меняем локально и кладём операцию в очередь — **одной транзакцией**.
+  ///
+  /// Иначе возможен разрыв: избранное переключилось, а операция потерялась,
+  /// и сервер о ней никогда не узнает.
+  Future<void> toggleFavoriteWithOutbox(int movieId) => transaction(() async {
+    final bool isFavorite = await (select(
+      favoriteMovies,
+    )..where(($FavoriteMoviesTable t) => t.movieId.equals(movieId))).getSingleOrNull() != null;
+
+    if (isFavorite) {
+      await (delete(
+        favoriteMovies,
+      )..where(($FavoriteMoviesTable t) => t.movieId.equals(movieId))).go();
+    } else {
+      await into(favoriteMovies).insertOnConflictUpdate(
+        FavoriteMoviesCompanion.insert(
+          movieId: Value<int>(movieId),
+          changedAt: DateTime.now(),
+        ),
+      );
+    }
+
+    final DateTime now = DateTime.now();
+    await into(pendingOps).insert(
+      PendingOpsCompanion.insert(
+        movieId: movieId,
+        kind: 'favorite',
+        payload: jsonEncode(<String, Object?>{
+          'movieId': movieId,
+          'isFavorite': !isFavorite,
+        }),
+        // Ключ идемпотентности: повтор той же операции сервер отсечёт сам.
+        idemKey: 'fav-$movieId-${now.microsecondsSinceEpoch}',
+        createdAt: now,
+      ),
+    );
+  });
+
+  Stream<List<PendingOp>> watchPendingOps() => (select(
+    pendingOps,
+  )..orderBy(<OrderClauseGenerator<$PendingOpsTable>>[
+    ($PendingOpsTable t) => OrderingTerm(expression: t.id),
+  ])).watch();
+
+  /// Очередь — это очередь: берём операции по порядку и не перескакиваем.
+  Future<List<PendingOp>> readPendingOps() => (select(
+    pendingOps,
+  )..where(($PendingOpsTable t) => t.status.equals('pending'))
+   ..orderBy(<OrderClauseGenerator<$PendingOpsTable>>[
+     ($PendingOpsTable t) => OrderingTerm(expression: t.id),
+   ])).get();
+
+  /// Разовое чтение всей очереди — для статуса синхронизации.
+  Future<List<PendingOp>> readAllOps() => select(pendingOps).get();
+
+  Future<void> markOpDone(int id) =>
+      (delete(pendingOps)..where(($PendingOpsTable t) => t.id.equals(id))).go();
+
+  /// 4xx повторять бессмысленно: операция уходит в dead letter.
+  Future<void> markOpDead(int id) =>
+      (update(pendingOps)..where(($PendingOpsTable t) => t.id.equals(id))).write(
+        const PendingOpsCompanion(status: Value<String>('dead')),
+      );
+
+  Future<void> rescheduleOp(int id, {required Duration delay}) async {
+    final PendingOp op = await (select(
+      pendingOps,
+    )..where(($PendingOpsTable t) => t.id.equals(id))).getSingle();
+
+    await (update(pendingOps)..where(($PendingOpsTable t) => t.id.equals(id)))
+        .write(
+          PendingOpsCompanion(
+            attempts: Value<int>(op.attempts + 1),
+            nextTry: Value<DateTime>(DateTime.now().add(delay)),
+          ),
+        );
+  }
+
+  /// Разрешение конфликта: приводим локальное состояние к серверному.
+  Future<void> applyServerFavorite(int movieId, {required bool isFavorite}) =>
+      transaction(() async {
+        if (isFavorite) {
+          await into(favoriteMovies).insertOnConflictUpdate(
+            FavoriteMoviesCompanion.insert(
+              movieId: Value<int>(movieId),
+              changedAt: DateTime.now(),
+            ),
+          );
+        } else {
+          await (delete(
+            favoriteMovies,
+          )..where(($FavoriteMoviesTable t) => t.movieId.equals(movieId))).go();
+        }
+      });
+
+  Future<void> clearOutbox() => delete(pendingOps).go();
 
   Future<void> clearCache() => transaction(() async {
     await delete(cachedMovies).go();

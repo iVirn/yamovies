@@ -8,6 +8,15 @@ import 'tmdb_api.dart';
 abstract interface class MovieRepository {
   const MovieRepository();
 
+  /// Лента как поток: экран подписывается один раз и получает обновления,
+  /// откуда бы они ни пришли — из кэша или из сети.
+  Stream<List<Movie>> watchMovies();
+
+  Stream<List<Genre>> watchGenres();
+
+  /// Ошибки фонового обновления: показываем баннером, кэш не трогаем.
+  Stream<Object> get backgroundErrors;
+
   Future<MoviesPageResponse> getMovies();
 
   Future<MovieGenresResponse> getGenres();
@@ -27,6 +36,21 @@ final class MovieRepositoryImpl implements MovieRepository {
   const MovieRepositoryImpl({required this.api});
 
   final TmdbApi api;
+
+  // Без кэша поток вырождается в один ответ: подписался — получил снимок.
+  @override
+  Stream<List<Movie>> watchMovies() =>
+      Stream<List<Movie>>.fromFuture(
+        getMovies().then((MoviesPageResponse page) => page.results),
+      );
+
+  @override
+  Stream<List<Genre>> watchGenres() => Stream<List<Genre>>.fromFuture(
+    getGenres().then((MovieGenresResponse response) => response.genres),
+  );
+
+  @override
+  Stream<Object> get backgroundErrors => const Stream<Object>.empty();
 
   @override
   Future<MoviesPageResponse> getMovies() => api.topRated();
@@ -57,6 +81,19 @@ final class MovieRepositoryMock implements MovieRepository {
   const MovieRepositoryMock({this.latency = const Duration(milliseconds: 800)});
 
   final Duration latency;
+
+  @override
+  Stream<List<Movie>> watchMovies() => Stream<List<Movie>>.fromFuture(
+    getMovies().then((MoviesPageResponse page) => page.results),
+  );
+
+  @override
+  Stream<List<Genre>> watchGenres() => Stream<List<Genre>>.fromFuture(
+    getGenres().then((MovieGenresResponse response) => response.genres),
+  );
+
+  @override
+  Stream<Object> get backgroundErrors => const Stream<Object>.empty();
 
   @override
   Future<MoviesPageResponse> getMovies() => Future<MoviesPageResponse>.delayed(

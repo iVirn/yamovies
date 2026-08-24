@@ -6,8 +6,10 @@ import 'package:movie_network/movie_network.dart';
 import 'package:yamovies/application/demo_settings.dart';
 import 'package:yamovies/application/movie_app.dart';
 import 'package:yamovies/data/favorites_service.dart';
+import 'package:yamovies/data/favorites_sync_api.dart';
 import 'package:yamovies/data/cached_movie_repository.dart';
 import 'package:yamovies/data/movie_repository.dart';
+import 'package:yamovies/data/sync_service.dart';
 import 'package:yamovies/data/tmdb_api.dart';
 import 'package:yamovies/data/tmdb_auth_service.dart';
 import 'package:yamovies/data/tmdb_config.dart';
@@ -35,6 +37,17 @@ void main() {
         eventBus: eventBus,
       );
 
+      final SyncService syncService = SyncService(
+        database: database,
+        api: FavoritesSyncApi(demoSettings: demoSettings),
+      );
+
+      // Сеть вернулась — толкаем очередь. В настоящем приложении сюда же
+      // подключают connectivity_plus и пуш-инициированную синхронизацию.
+      // Слушателя снимает контейнер: подписка на чужой ChangeNotifier живёт,
+      // пока её не отменят.
+      syncService.listenToConnectivity(demoSettings);
+
       final DependencyContainer container = DependencyContainer(
         movieRepository: CachedMovieRepository(
           remote: _createRepository(
@@ -43,9 +56,14 @@ void main() {
             eventBus: eventBus,
           ),
           database: database,
+          demoSettings: demoSettings,
         ),
         database: database,
-        favoritesService: FavoritesService(),
+        favoritesService: FavoritesService(
+          database: database,
+          syncService: syncService,
+        ),
+        syncService: syncService,
         tokenStorage: tokenStorage,
         tokenRefresher: tokenRefresher,
         networkEventBus: eventBus,

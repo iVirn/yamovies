@@ -36,6 +36,19 @@ class _SlowRepository implements MovieRepository {
   @override
   Future<List<Movie>> searchMovies(String query, {CancelToken? cancelToken}) =>
       throw UnimplementedError();
+
+  @override
+  Stream<List<Movie>> watchMovies() => Stream<List<Movie>>.fromFuture(
+    getMovies().then((MoviesPageResponse page) => page.results),
+  );
+
+  @override
+  Stream<List<Genre>> watchGenres() => Stream<List<Genre>>.fromFuture(
+    getGenres().then((MovieGenresResponse response) => response.genres),
+  );
+
+  @override
+  Stream<Object> get backgroundErrors => const Stream<Object>.empty();
 }
 
 const MovieDetails _details = MovieDetails(

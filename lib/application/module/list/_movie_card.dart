@@ -5,6 +5,7 @@ class _MovieCard extends StatelessWidget {
     required this.movie,
     required this.genreNames,
     required this.isFavorite,
+    required this.isUnsynced,
     required this.onFavoriteTap,
     required this.onTap,
   });
@@ -12,6 +13,9 @@ class _MovieCard extends StatelessWidget {
   final Movie movie;
   final List<String> genreNames;
   final bool isFavorite;
+
+  /// Изменение уже в базе, но ещё не уехало на сервер.
+  final bool isUnsynced;
   final VoidCallback onFavoriteTap;
   final VoidCallback onTap;
 
@@ -60,6 +64,19 @@ class _MovieCard extends StatelessWidget {
                     bottom: 10,
                     child: _RatingBadge(rating: movie.voteAverage),
                   ),
+                  if (isUnsynced)
+                    const Positioned(
+                      right: 10,
+                      bottom: 10,
+                      child: Tooltip(
+                        message: 'Not synced yet',
+                        child: Icon(
+                          Icons.cloud_off,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

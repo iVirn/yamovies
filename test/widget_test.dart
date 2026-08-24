@@ -7,6 +7,8 @@ import 'package:yamovies/components/poster_fallback.dart';
 import 'package:movie_database/movie_database.dart';
 import 'package:movie_network/movie_network.dart';
 import 'package:yamovies/data/favorites_service.dart';
+import 'package:yamovies/data/favorites_sync_api.dart';
+import 'package:yamovies/data/sync_service.dart';
 import 'package:yamovies/data/movie_repository.dart';
 import 'package:yamovies/dependency_injection/dependency_container/dependency_container.dart';
 import 'package:yamovies/dependency_injection/dependency_container/dependency_scope.dart';
@@ -19,9 +21,25 @@ const MovieRepositoryMock _repository = MovieRepositoryMock(
   latency: Duration.zero,
 );
 
-Widget _appUnderTest() {
+Widget _appUnderTest(WidgetTester tester) {
   final NetworkEventBus eventBus = NetworkEventBus();
   final TokenStorage tokenStorage = InMemoryTokenStorage();
+  final DemoSettings demoSettings = DemoSettings();
+  final AppDatabase database = AppDatabase(NativeDatabase.memory());
+  final SyncService syncService = SyncService(
+    database: database,
+    api: FavoritesSyncApi(demoSettings: demoSettings),
+  );
+  final FavoritesService favoritesService = FavoritesService(
+    database: database,
+    syncService: syncService,
+  );
+
+  // Сервисы закрываем сами: подписки живут дольше дерева виджетов.
+  // Саму базу в widget-тесте не закрываем — `close()` ждёт реального I/O,
+  // которого в фиктивном времени теста не случится.
+  addTearDown(syncService.dispose);
+  addTearDown(favoritesService.dispose);
 
   // Здесь именно `DependencyScope`, а не `DependencyOwner`: зависимости
   // создаёт сам тест, он же их и закрывает. Владелец закрывал бы их при
@@ -30,8 +48,9 @@ Widget _appUnderTest() {
   return DependencyScope(
     container: DependencyContainer(
       movieRepository: _repository,
-      database: AppDatabase(NativeDatabase.memory()),
-      favoritesService: FavoritesService(),
+      database: database,
+      favoritesService: favoritesService,
+      syncService: syncService,
       tokenStorage: tokenStorage,
       tokenRefresher: TokenRefresher(
         storage: tokenStorage,
@@ -39,7 +58,7 @@ Widget _appUnderTest() {
         eventBus: eventBus,
       ),
       networkEventBus: eventBus,
-      demoSettings: DemoSettings(),
+      demoSettings: demoSettings,
     ),
     child: const MovieApp(),
   );
@@ -54,8 +73,20 @@ Future<void> _pumpFrames(WidgetTester tester) async {
 
 /// Поднять приложение и дождаться, пока репозиторий отдаст фикстуру.
 Future<void> _pumpApp(WidgetTester tester) async {
-  await tester.pumpWidget(_appUnderTest());
+  await tester.pumpWidget(_appUnderTest(tester));
   await _pumpFrames(tester);
+}
+
+/// Снять дерево и прокрутить нулевой таймер, который drift ставит при отмене
+/// подписки на запрос. Без этого flutter_test ругается «A Timer is still
+/// pending even after the widget tree was disposed» — проверка выполняется
+/// раньше, чем tearDown.
+Future<void> _disposeApp(WidgetTester tester) async {
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pump(Duration.zero);
+  // Даём отработать и синхронизации: её запрос «на сервер» тоже таймер.
+  await tester.pump(const Duration(seconds: 2));
+  await tester.pump(Duration.zero);
 }
 
 void main() {
@@ -97,6 +128,8 @@ void main() {
     expect(longGenres.maxLines, 1);
     expect(longGenres.overflow, TextOverflow.ellipsis);
     expect(tester.takeException(), isNull);
+
+    await _disposeApp(tester);
   });
 
   testWidgets('catalog scrolls without overflow at 320 and 390 px', (
@@ -115,6 +148,8 @@ void main() {
 
       expect(find.text('Spirited Away'), findsOneWidget);
       expect(tester.takeException(), isNull);
+
+      await _disposeApp(tester);
     }
   });
 
@@ -173,6 +208,8 @@ void main() {
 
     expect(find.byTooltip('Remove from favorites'), findsNothing);
     expect(find.byTooltip('Add to favorites'), findsNWidgets(6));
+
+    await _disposeApp(tester);
   });
 
   testWidgets('About and credits contains the TMDB attribution', (
@@ -189,5 +226,7 @@ void main() {
     expect(dialog.applicationName, 'YaMovies');
     expect(dialog.applicationIcon, isA<Image>());
     expect(find.text(tmdbAttributionNotice), findsOneWidget);
+
+    await _disposeApp(tester);
   });
 }

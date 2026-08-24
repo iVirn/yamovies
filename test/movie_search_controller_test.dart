@@ -42,6 +42,19 @@ class _CountingRepository implements MovieRepository {
   @override
   Future<List<Movie>> getSimilarMovies(int id) async =>
       throw UnimplementedError();
+
+  @override
+  Stream<List<Movie>> watchMovies() => Stream<List<Movie>>.fromFuture(
+    getMovies().then((MoviesPageResponse page) => page.results),
+  );
+
+  @override
+  Stream<List<Genre>> watchGenres() => Stream<List<Genre>>.fromFuture(
+    getGenres().then((MovieGenresResponse response) => response.genres),
+  );
+
+  @override
+  Stream<Object> get backgroundErrors => const Stream<Object>.empty();
 }
 
 Movie _movie(String title) => Movie(

@@ -81,6 +81,7 @@ cd modules/movie_database && flutter pub run build_runner build
 | `async-06-dio-interceptors-refresh` | 04. Сетевой слой | цепочка интерсепторов, 401 → refresh → повтор, очередь ожидания |
 | `async-07-token-storage` | 05. Локальное хранение | `SharedPreferences` против `flutter_secure_storage` |
 | `async-08-local-cache-drift` | 05. Локальное хранение | кэш ленты на `drift`: таблицы, транзакции, `watch()` |
+| `async-09-offline-first-outbox` | 06. Offline-first | `watch()` = кэш + сеть, outbox, синхронизация и 409 |
 
 ## Запуск
 
@@ -407,3 +408,44 @@ cp '.run/YaMovies (TMDB).run.xml.template' '.run/YaMovies (TMDB).run.xml'
    репозиторий отдал кэш.
 3. «Clear cache» при выключенной сети — лента честно показывает ошибку:
    пустой кэш скрывать нечем.
+
+## async-09-offline-first-outbox
+
+Демо «Режим полёта». Всё, что разбиралось раньше, сходится в одном месте:
+`dio` с интерсепторами, `drift` под кэш, `Stream` в UI и очередь операций.
+
+**Где смотреть в приложении**
+
+Лента → **«Lecture demos»** → блок **«Outbox»**: переключатели «Airplane mode»
+и «Server answers 409», кнопка «Sync now», счётчики очереди и dead letter,
+список операций с ключами идемпотентности. На карточках фильмов — бейдж
+с перечёркнутым облаком («не синхронизировано»), а над лентой — красный
+баннер «показываем кэш», когда фоновое обновление упало.
+
+**Файлы**
+
+| Файл | Что в нём |
+|---|---|
+| `modules/movie_database/lib/src/tables.dart` | Таблицы `FavoriteMovies` и `PendingOps` (kind, payload, `idemKey` с UNIQUE, attempts, nextTry, status) |
+| `modules/movie_database/lib/src/app_database.dart` | `toggleFavoriteWithOutbox` — изменение и операция кладутся **одной транзакцией**; чтение очереди по порядку, `markOpDone` / `markOpDead` / `rescheduleOp`, `applyServerFavorite` для разрешения конфликта |
+| `lib/data/sync_service.dart` | Разбор очереди: успех → удаление, 409 → версия сервера, `SocketException` → `reschedule` с экспоненциальным backoff и джиттером и **остановка прохода** (порядок нельзя нарушать), прочее → dead letter. Здесь же `OutboxEntry` — модель очереди для экрана, чтобы строки drift не уезжали в UI |
+| `lib/data/favorites_sync_api.dart` | Приёмная сторона: задержка, обрыв связи, ответ 409 и множество применённых ключей идемпотентности — повтор не создаёт вторую запись |
+| `lib/data/favorites_service.dart` | Источник правды — таблица: переключение переживает перезапуск и работает офлайн. Подписка на базу поднимается на первом слушателе и отпускается, когда слушать некому |
+| `lib/data/cached_movie_repository.dart` | `watchMovies()` — stale-while-revalidate: первым приходит кэш, следом фоновое обновление тем же потоком. Ошибки уходят в `backgroundErrors` |
+| `lib/application/module/list/bloc/movie_list_bloc.dart` | `emit.forEach` поверх `Rx.combineLatest2(watchMovies(), watchGenres())` |
+| `lib/application/module/list/_outbox_panel.dart` | Очередь, статусы, переключатели и «Sync now» |
+| `lib/application/module/list/_movie_card.dart` | Бейдж «не синхронизировано» |
+| `lib/application/module/list/_movie_list_view.dart` | Баннер фоновой ошибки над лентой |
+| `lib/application/demo_settings.dart` | Флаги `airplaneMode` и `simulateConflict` |
+| `test/sync_service_test.dart` | Офлайн-переключение, уход очереди при возврате сети, разрешение 409, идемпотентность |
+
+**Как показывать**
+
+1. Включить «Airplane mode»: лента остаётся на месте (кэш), сверху —
+   баннер «показываем кэш».
+2. Добавить три фильма в избранное: на карточках бейдж «не синхронизировано»,
+   в панели растёт очередь, `attempts` увеличивается после каждого прохода.
+3. Выключить «Airplane mode»: очередь уходит операция за операцией,
+   бейджи гаснут.
+4. Включить «Server answers 409» и повторить с фильмом с чётным id: конфликт
+   разрешается версией сервера, о чём панель прямо и пишет.

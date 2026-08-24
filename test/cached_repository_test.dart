@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:movie_database/movie_database.dart';
 import 'package:movie_network/movie_network.dart';
+import 'package:yamovies/application/demo_settings.dart';
 import 'package:yamovies/data/cached_movie_repository.dart';
 import 'package:yamovies/data/movie_repository.dart';
 import 'package:yamovies/domain/movie.dart';
@@ -14,6 +15,19 @@ class _SwitchableRemote implements MovieRepository {
   _SwitchableRemote();
 
   bool isOffline = false;
+
+  @override
+  Stream<List<Movie>> watchMovies() => Stream<List<Movie>>.fromFuture(
+    getMovies().then((MoviesPageResponse page) => page.results),
+  );
+
+  @override
+  Stream<List<Genre>> watchGenres() => Stream<List<Genre>>.fromFuture(
+    getGenres().then((MovieGenresResponse response) => response.genres),
+  );
+
+  @override
+  Stream<Object> get backgroundErrors => const Stream<Object>.empty();
 
   @override
   Future<MoviesPageResponse> getMovies() async {
@@ -83,7 +97,11 @@ void main() {
     // Настоящая БД в памяти: полноценный SQL и ноль файлов на диске.
     database = AppDatabase(NativeDatabase.memory());
     remote = _SwitchableRemote();
-    repository = CachedMovieRepository(remote: remote, database: database);
+    repository = CachedMovieRepository(
+      remote: remote,
+      database: database,
+      demoSettings: DemoSettings(),
+    );
   });
 
   tearDown(() => database.close());

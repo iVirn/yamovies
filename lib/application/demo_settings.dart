@@ -14,6 +14,8 @@ class DemoSettings extends ChangeNotifier {
   bool _breakCastRequest = false;
   bool _cancelSubscriptionOnDispose = false;
   bool _useSecureStorage = true;
+  bool _airplaneMode = false;
+  bool _simulateConflict = false;
 
   /// Демо «UI замирает»: считать индекс каталога в отдельном изоляте
   /// (`Isolate.run`) вместо UI-изолята.
@@ -86,6 +88,32 @@ class DemoSettings extends ChangeNotifier {
     }
 
     _useSecureStorage = value;
+    notifyListeners();
+  }
+
+  /// Демо «режим полёта»: сеть выключена внутри приложения, чтобы не гасить
+  /// Wi-Fi на лекции. Для кода это обычный `SocketException`.
+  bool get airplaneMode => _airplaneMode;
+
+  set airplaneMode(bool value) {
+    if (_airplaneMode == value) {
+      return;
+    }
+
+    _airplaneMode = value;
+    notifyListeners();
+  }
+
+  /// Сервер отвечает 409 на операции по фильмам с чётным id: «пока вы были
+  /// офлайн, с другого устройства этот фильм убрали».
+  bool get simulateConflict => _simulateConflict;
+
+  set simulateConflict(bool value) {
+    if (_simulateConflict == value) {
+      return;
+    }
+
+    _simulateConflict = value;
     notifyListeners();
   }
 }

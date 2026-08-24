@@ -20,25 +20,83 @@ class _MovieListView extends StatelessWidget {
           _TmdbAttributionButton(),
         ],
       ),
-      body: BlocBuilder<MovieListBloc, MovieListState>(
-        buildWhen: (MovieListState previous, MovieListState current) =>
-            previous is! MovieListLoadingState ||
-            current is! MovieListLoadingState,
-        builder: (BuildContext context, MovieListState state) {
-          return switch (state) {
-            MovieListLoadingState() => const Center(
-              child: CircularProgressIndicator(),
-            ),
-            MovieListSuccessState success => ListenableBuilder(
-              listenable: controller,
-              builder: (BuildContext context, Widget? child) {
-                return _MovieListContent(state: success, controller: controller);
-              },
-            ),
-            MovieListFailureState failure => _MovieListError(state: failure),
-          };
-        },
+      body: Column(
+        children: <Widget>[
+          const _BackgroundErrorBanner(),
+          Expanded(child: _buildBody(context, controller)),
+        ],
       ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, MovieListController controller) {
+    return BlocBuilder<MovieListBloc, MovieListState>(
+      buildWhen: (MovieListState previous, MovieListState current) =>
+          previous is! MovieListLoadingState ||
+          current is! MovieListLoadingState,
+      builder: (BuildContext context, MovieListState state) {
+        return switch (state) {
+          MovieListLoadingState() => const Center(
+            child: CircularProgressIndicator(),
+          ),
+          MovieListSuccessState success => ListenableBuilder(
+            listenable: controller,
+            builder: (BuildContext context, Widget? child) {
+              return _MovieListContent(state: success, controller: controller);
+            },
+          ),
+          MovieListFailureState failure => _MovieListError(state: failure),
+        };
+      },
+    );
+  }
+}
+
+/// Фоновое обновление упало — говорим об этом баннером, а кэш на экране
+/// оставляем: это ровно та ситуация, ради которой offline-first и делают.
+class _BackgroundErrorBanner extends StatelessWidget {
+  const _BackgroundErrorBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final MovieRepository repository = DependencyScope.of(
+      context,
+    ).movieRepository;
+
+    return StreamBuilder<Object>(
+      stream: repository.backgroundErrors,
+      builder: (BuildContext context, AsyncSnapshot<Object> snapshot) {
+        final Object? error = snapshot.data;
+        if (error == null) {
+          return const SizedBox.shrink();
+        }
+
+        return Material(
+          color: theme.colorScheme.errorContainer,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  Icons.wifi_off,
+                  size: 18,
+                  color: theme.colorScheme.onErrorContainer,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${describeLoadError(error)} Показываем кэш.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onErrorContainer,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

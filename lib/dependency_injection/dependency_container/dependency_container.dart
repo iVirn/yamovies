@@ -4,6 +4,7 @@ import 'package:movie_network/movie_network.dart';
 import '../../application/demo_settings.dart';
 import '../../data/favorites_service.dart';
 import '../../data/movie_repository.dart';
+import '../../data/sync_service.dart';
 import '../../data/token_storages.dart';
 
 /// Контейнер зависимостей приложения.
@@ -17,6 +18,7 @@ final class DependencyContainer {
     required this.movieRepository,
     required this.database,
     required this.favoritesService,
+    required this.syncService,
     required this.tokenStorage,
     required this.tokenRefresher,
     required this.networkEventBus,
@@ -28,6 +30,9 @@ final class DependencyContainer {
   /// Локальный кэш: drift поверх SQLite.
   final AppDatabase database;
   final FavoritesService favoritesService;
+
+  /// Разбор очереди изменений: то, что пользователь сделал офлайн.
+  final SyncService syncService;
 
   /// Единственный владелец токена — его же подменяет демо «401 и refresh».
   final TokenStorage tokenStorage;
@@ -48,6 +53,7 @@ final class DependencyContainer {
     }
 
     await favoritesService.dispose();
+    await syncService.dispose();
     await database.close();
     await networkEventBus.dispose();
     demoSettings.dispose();

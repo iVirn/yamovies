@@ -44,3 +44,32 @@ class SyncMeta extends Table {
   @override
   Set<Column<Object>> get primaryKey => <Column<Object>>{key};
 }
+
+/// Избранное пользователя — то, что он меняет офлайн.
+@DataClassName('FavoriteMovie')
+class FavoriteMovies extends Table {
+  IntColumn get movieId => integer()();
+  DateTimeColumn get changedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{movieId};
+}
+
+/// Очередь изменений: то, что пользователь сделал офлайн и что надо
+/// отправить позже.
+///
+/// Ключ идемпотентности генерирует **клиент** и хранит вместе с операцией:
+/// сеть могла оборваться после того, как сервер применил операцию,
+/// но до того, как ответ дошёл.
+@DataClassName('PendingOp')
+class PendingOps extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get movieId => integer()();
+  TextColumn get kind => text()(); // 'favorite'
+  TextColumn get payload => text()(); // JSON
+  TextColumn get idemKey => text().unique()();
+  IntColumn get attempts => integer().withDefault(const Constant(0))();
+  DateTimeColumn get nextTry => dateTime().nullable()();
+  TextColumn get status => text().withDefault(const Constant('pending'))();
+  DateTimeColumn get createdAt => dateTime()();
+}
