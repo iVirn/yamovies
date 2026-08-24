@@ -33,6 +33,22 @@ class TmdbApi {
     return MovieGenresResponse.fromJson(json);
   }
 
+  /// Поиск по названию. `CancelToken` здесь не украшение: строка поиска
+  /// отменяет предыдущий запрос при каждом новом вводе.
+  Future<List<Movie>> search(String query, {CancelToken? cancelToken}) async {
+    final Map<String, Object?> json = await _httpClient.getJson(
+      'search/movie',
+      queryParameters: <String, Object?>{
+        'query': query,
+        'language': TmdbConfig.language,
+        'include_adult': false,
+      },
+      cancelToken: cancelToken,
+    );
+
+    return MoviesPageResponse.fromJson(json).results;
+  }
+
   Future<MovieDetails> movieDetails(int id, {CancelToken? cancelToken}) async {
     final Map<String, Object?> json = await _httpClient.getJson(
       'movie/$id',

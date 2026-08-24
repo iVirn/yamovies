@@ -35,6 +35,7 @@ dependencies:
     path: modules/movie_database
   movie_network:
     path: modules/movie_network
+  rxdart: ^0.28.0
 
 dev_dependencies:
   flutter_test:
@@ -46,6 +47,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  fake_async: ^1.3.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

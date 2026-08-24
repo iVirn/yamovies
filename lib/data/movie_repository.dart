@@ -17,6 +17,8 @@ abstract interface class MovieRepository {
   Future<List<CastMember>> getMovieCast(int id);
 
   Future<List<Movie>> getSimilarMovies(int id);
+
+  Future<List<Movie>> searchMovies(String query, {CancelToken? cancelToken});
 }
 
 /// Единственная точка правды для экранов: отдаёт доменные модели и ничего
@@ -40,6 +42,10 @@ final class MovieRepositoryImpl implements MovieRepository {
 
   @override
   Future<List<Movie>> getSimilarMovies(int id) => api.similarMovies(id);
+
+  @override
+  Future<List<Movie>> searchMovies(String query, {CancelToken? cancelToken}) =>
+      api.search(query, cancelToken: cancelToken);
 }
 
 /// Запасной репозиторий: работает без ключа TMDB и без сети.
@@ -48,19 +54,22 @@ final class MovieRepositoryImpl implements MovieRepository {
 /// разница между суммой ожиданий и самым долгим из них видна только тогда,
 /// когда ожидание вообще есть.
 final class MovieRepositoryMock implements MovieRepository {
-  const MovieRepositoryMock({
-    this.latency = const Duration(milliseconds: 800),
-  });
+  const MovieRepositoryMock({this.latency = const Duration(milliseconds: 800)});
 
   final Duration latency;
 
   @override
-  Future<MoviesPageResponse> getMovies() =>
-      Future<MoviesPageResponse>.delayed(latency, () => _mockTopRatedMoviesResponse);
+  Future<MoviesPageResponse> getMovies() => Future<MoviesPageResponse>.delayed(
+    latency,
+    () => _mockTopRatedMoviesResponse,
+  );
 
   @override
   Future<MovieGenresResponse> getGenres() =>
-      Future<MovieGenresResponse>.delayed(latency, () => _mockMovieGenresResponse);
+      Future<MovieGenresResponse>.delayed(
+        latency,
+        () => _mockMovieGenresResponse,
+      );
 
   @override
   Future<MovieDetails> getMovieDetails(int id) =>
@@ -109,6 +118,24 @@ final class MovieRepositoryMock implements MovieRepository {
             if (movie.id != id) movie,
         ];
       });
+
+  @override
+  Future<List<Movie>> searchMovies(String query, {CancelToken? cancelToken}) {
+    // Короткий запрос отвечает дольше: так и рождается гонка ответов —
+    // «Fal» приезжает уже после «Falcon» и затирает его.
+    final Duration delay =
+        latency +
+        Duration(milliseconds: (800 - query.length * 120).clamp(0, 800));
+
+    return Future<List<Movie>>.delayed(delay, () {
+      final String needle = query.toLowerCase();
+
+      return <Movie>[
+        for (final Movie movie in _mockTopRatedMoviesResponse.results)
+          if (movie.title.toLowerCase().contains(needle)) movie,
+      ];
+    });
+  }
 
   Movie _movieById(int id) => _mockTopRatedMoviesResponse.results.firstWhere(
     (Movie movie) => movie.id == id,

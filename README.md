@@ -77,6 +77,7 @@ cd modules/movie_database && flutter pub run build_runner build
 | `async-02-future-wait` | 01. Event loop и Future | живой TMDB, три запроса экрана фильма через `Future.wait` |
 | `async-03-stream-favorites` | 02. Stream | избранное как `StreamController` + `StreamBuilder` |
 | `async-04-subscription-leak` | 02. Stream | `listen` без `cancel`: утечка, которую видно на экране |
+| `async-05-search-debounce-switchmap` | 03. Трансформации Stream | строка поиска: `debounce`, `switchMap` и отмена запроса |
 
 ## Запуск
 
@@ -252,3 +253,38 @@ cp '.run/YaMovies (TMDB).run.xml.template' '.run/YaMovies (TMDB).run.xml'
 3. DevTools → Memory: каждый заход оставил ещё один живой `State`.
 4. Включить переключатель, сбросить счётчики, повторить: «Live listeners»
    возвращается к нулю, консоль чистая.
+
+## async-05-search-debounce-switchmap
+
+Демо «Строка поиска»: один экран в трёх режимах, переключается на лету.
+
+**Где смотреть в приложении**
+
+Шапка ленты → кнопка поиска (лупа). На экране поиска: поле ввода,
+переключатель режимов `raw / debounce / switchMap`, под ним — **журнал
+запросов** со статусами, ниже — выдача. Заголовок выдачи показывает,
+**на какой ввод** пришёл ответ.
+
+**Файлы**
+
+| Файл | Что в нём |
+|---|---|
+| `lib/application/module/search/movie_search_controller.dart` | `BehaviorSubject` для ввода и для выдачи; общий кусок конвейера (`map` → `where` → `distinct`), а различие режимов — ровно в двух операторах: `debounceTime(300ms)` и `switchMap` против `asyncExpand`. Запрос собран на `Stream.multi` ради `onCancel`: `switchMap` отписывается — дёргается `CancelToken` |
+| `lib/application/module/search/movie_search_screen.dart` | Экран целиком: поле, режимы, журнал, выдача |
+| `lib/application/module/search/_search_field.dart` | Каждый символ уходит в поток; что с ним делать — решают операторы, а не виджет |
+| `lib/application/module/search/_search_mode_selector.dart` | `SegmentedButton` с тремя режимами |
+| `lib/application/module/search/_search_request_log.dart` | Тот самый Network-таб, только на экране: `in flight` / `done` / `cancelled` / `failed` |
+| `lib/application/module/search/_search_results.dart` | Выдача и заголовок «Results for …» |
+| `lib/data/tmdb_api.dart`, `lib/data/movie_repository.dart` | `search` с `CancelToken`; мок отвечает тем дольше, чем короче запрос — так воспроизводится гонка ответов |
+| `lib/application/module/list/_movie_list_view.dart` | Кнопка поиска в шапке |
+| `pubspec.yaml` | Зависимость `rxdart` — ради `BehaviorSubject`, `debounceTime` и `switchMap` |
+| `test/movie_search_controller_test.dart` | `fake_async` для debounce (тест на паузу в 300 мс идёт мгновенно), реальное время для `switchMap`, проверка закрытия контроллера посреди запроса |
+
+**Как показывать**
+
+1. Режим `raw`: набрать «matrix» — в журнале шесть запросов, выдача мигает,
+   заголовок «Results for…» скачет.
+2. Режим `debounce`: тот же ввод — один запрос вместо шести. Если набирать
+   с паузами, гонка всё ещё воспроизводится: `asyncExpand` ничего не отменяет.
+3. Режим `switchMap`: в журнале видно `cancelled` у незавершённых запросов,
+   на экране всегда ответ на последний ввод.

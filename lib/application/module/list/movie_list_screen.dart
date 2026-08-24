@@ -15,6 +15,7 @@ import '../../../utils/tmdb_attribution.dart';
 import '../../controller_scope.dart';
 import '../../leak_probe.dart';
 import '../../demo_settings.dart';
+import '../search/movie_search_screen.dart';
 import 'bloc/movie_list_bloc.dart';
 import 'movie_list_controller.dart';
 

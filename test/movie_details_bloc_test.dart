@@ -32,6 +32,10 @@ class _SlowRepository implements MovieRepository {
   @override
   Future<List<Movie>> getSimilarMovies(int id) =>
       Future<List<Movie>>.delayed(delay, () => const <Movie>[]);
+
+  @override
+  Future<List<Movie>> searchMovies(String query, {CancelToken? cancelToken}) =>
+      throw UnimplementedError();
 }
 
 const MovieDetails _details = MovieDetails(

@@ -11,7 +11,11 @@ class _MovieListView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Top Rated Movies'),
-        actions: const <Widget>[_FavoritesCounter(), _TmdbAttributionButton()],
+        actions: const <Widget>[
+          _SearchAction(),
+          _FavoritesCounter(),
+          _TmdbAttributionButton(),
+        ],
       ),
       body: BlocBuilder<MovieListBloc, MovieListState>(
         buildWhen: (MovieListState previous, MovieListState current) =>
@@ -72,6 +76,23 @@ class _MovieListError extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SearchAction extends StatelessWidget {
+  const _SearchAction();
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'Search movies',
+      onPressed: () => Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) => const MovieSearchScreen(),
+        ),
+      ),
+      icon: const Icon(Icons.search),
     );
   }
 }
