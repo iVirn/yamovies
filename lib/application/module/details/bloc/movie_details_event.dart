@@ -1,7 +1,10 @@
 part of 'movie_details_bloc.dart';
 
-sealed class MovieDetailsEvent {
+sealed class MovieDetailsEvent extends Equatable {
   const MovieDetailsEvent();
+
+  @override
+  List<Object?> get props => <Object?>[];
 }
 
 final class MovieDetailsStarted extends MovieDetailsEvent {

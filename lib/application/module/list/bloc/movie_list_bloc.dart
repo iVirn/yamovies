@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
 
 import '../../../../data/movie_repository.dart';
 import '../../../../domain/movie.dart';
@@ -31,6 +32,10 @@ class MovieListBloc extends Bloc<MovieListEvent, MovieListState> {
       final (MoviesPageResponse moviesResponse, MovieGenresResponse genresResponse) =
           await (_repository.getMovies(), _repository.getGenres()).wait;
 
+      if (emit.isDone) {
+        return;
+      }
+
       emit(
         MovieListSuccessState(
           movies: moviesResponse.results,
@@ -38,6 +43,10 @@ class MovieListBloc extends Bloc<MovieListEvent, MovieListState> {
         ),
       );
     } catch (error) {
+      if (emit.isDone) {
+        return;
+      }
+
       emit(
         MovieListFailureState(
           message: describeLoadError(_unwrap(error)),

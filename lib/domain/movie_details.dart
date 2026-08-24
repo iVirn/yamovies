@@ -1,7 +1,9 @@
+import 'package:equatable/equatable.dart';
+
 import 'movie.dart';
 
 /// Ответ `/movie/{id}` — то, чего нет в карточке ленты.
-class MovieDetails {
+class MovieDetails extends Equatable {
   const MovieDetails({
     required this.id,
     required this.title,
@@ -17,7 +19,7 @@ class MovieDetails {
   });
 
   factory MovieDetails.fromJson(Map<String, Object?> json) => MovieDetails(
-    id: json['id'] as int,
+    id: (json['id'] as num).toInt(),
     title: json['title'] as String? ?? '',
     overview: json['overview'] as String? ?? '',
     tagline: json['tagline'] as String? ?? '',
@@ -60,10 +62,25 @@ class MovieDetails {
   final int voteCount;
   final String? releaseDate;
   final String? posterPath;
+
+  @override
+  List<Object?> get props => <Object?>[
+    id,
+    title,
+    overview,
+    tagline,
+    runtimeMinutes,
+    status,
+    genres,
+    voteAverage,
+    voteCount,
+    releaseDate,
+    posterPath,
+  ];
 }
 
 /// Один актёр из ответа `/movie/{id}/credits`.
-class CastMember {
+class CastMember extends Equatable {
   const CastMember({
     required this.id,
     required this.name,
@@ -72,7 +89,7 @@ class CastMember {
   });
 
   factory CastMember.fromJson(Map<String, Object?> json) => CastMember(
-    id: json['id'] as int,
+    id: (json['id'] as num).toInt(),
     name: json['name'] as String? ?? '',
     character: json['character'] as String? ?? '',
     profilePath: json['profile_path'] as String?,
@@ -82,10 +99,13 @@ class CastMember {
   final String name;
   final String character;
   final String? profilePath;
+
+  @override
+  List<Object?> get props => <Object?>[id, name, character, profilePath];
 }
 
 /// Всё, из чего собран экран фильма: три ответа плюс время загрузки.
-class MovieDetailsBundle {
+class MovieDetailsBundle extends Equatable {
   const MovieDetailsBundle({
     required this.details,
     required this.cast,
@@ -104,4 +124,14 @@ class MovieDetailsBundle {
   /// Ошибки запросов, которые не уронили экран целиком
   /// (`Future.wait` без `eagerError`).
   final List<String> partialErrors;
+
+  @override
+  List<Object?> get props => <Object?>[
+    details,
+    cast,
+    similar,
+    loadDuration,
+    loadedInParallel,
+    partialErrors,
+  ];
 }

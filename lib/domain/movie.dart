@@ -1,4 +1,11 @@
-class Movie {
+import 'package:equatable/equatable.dart';
+
+/// Доменная модель фильма.
+///
+/// Сравнение по значению — не украшение: состояния BLoC и оператор `distinct`
+/// сравнивают именно модели, и без `==` каждая перерисовка считалась бы
+/// новым значением.
+class Movie extends Equatable {
   const Movie({
     required this.adult,
     required this.backdropPath,
@@ -26,7 +33,9 @@ class Movie {
       for (final Object? id in json['genre_ids'] as List<Object?>? ?? const [])
         if (id is int) id,
     ],
-    id: json['id'] as int,
+    // Единственное поле без запасного значения — идентификатор:
+    // фильм без id бессмыслен, и молча подставлять ноль тут хуже, чем упасть.
+    id: (json['id'] as num).toInt(),
     originalLanguage: json['original_language'] as String? ?? '',
     originalTitle: json['original_title'] as String? ?? '',
     overview: json['overview'] as String? ?? '',
@@ -53,16 +62,37 @@ class Movie {
   final bool video;
   final double voteAverage;
   final int voteCount;
+
+  @override
+  List<Object?> get props => <Object?>[
+    adult,
+    backdropPath,
+    genreIds,
+    id,
+    originalLanguage,
+    originalTitle,
+    overview,
+    popularity,
+    posterPath,
+    releaseDate,
+    title,
+    video,
+    voteAverage,
+    voteCount,
+  ];
 }
 
-class Genre {
+class Genre extends Equatable {
   const Genre({required this.id, required this.name});
 
   factory Genre.fromJson(Map<String, Object?> json) => Genre(
-    id: json['id'] as int,
+    id: (json['id'] as num).toInt(),
     name: json['name'] as String? ?? 'Unknown',
   );
 
   final int id;
   final String name;
+
+  @override
+  List<Object?> get props => <Object?>[id, name];
 }

@@ -1,6 +1,7 @@
 // ignore_for_file: prefer_initializing_formals
 
 import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
 
 import '../../../../data/movie_repository.dart';
 import '../../../../domain/movie.dart';
@@ -46,6 +47,14 @@ class MovieDetailsBloc extends Bloc<MovieDetailsEvent, MovieDetailsState> {
           : await _loadSequentially();
       stopwatch.stop();
 
+      // Пока летели три запроса, пользователь мог уйти с экрана. Закрытый
+      // bloc эмит просто проглотит, но проверять `isDone` после каждого
+      // ожидания — то, что предписывает сам bloc: иначе легко не заметить,
+      // как обработчик доделывает работу для экрана, которого уже нет.
+      if (emit.isDone) {
+        return;
+      }
+
       emit(
         MovieDetailsSuccessState(
           bundle: MovieDetailsBundle(
@@ -60,6 +69,10 @@ class MovieDetailsBloc extends Bloc<MovieDetailsEvent, MovieDetailsState> {
       );
     } catch (error) {
       stopwatch.stop();
+
+      if (emit.isDone) {
+        return;
+      }
 
       emit(
         MovieDetailsFailureState(

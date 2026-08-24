@@ -1,6 +1,8 @@
+import 'package:equatable/equatable.dart';
+
 import 'movie.dart';
 
-class MoviesPageResponse {
+class MoviesPageResponse extends Equatable {
   const MoviesPageResponse({
     required this.page,
     required this.results,
@@ -24,9 +26,12 @@ class MoviesPageResponse {
   final List<Movie> results;
   final int totalPages;
   final int totalResults;
+
+  @override
+  List<Object?> get props => <Object?>[page, results, totalPages, totalResults];
 }
 
-class MovieGenresResponse {
+class MovieGenresResponse extends Equatable {
   const MovieGenresResponse({required this.genres});
 
   factory MovieGenresResponse.fromJson(Map<String, Object?> json) =>
@@ -39,4 +44,7 @@ class MovieGenresResponse {
       );
 
   final List<Genre> genres;
+
+  @override
+  List<Object?> get props => <Object?>[genres];
 }

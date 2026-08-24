@@ -140,58 +140,36 @@ cp '.run/YaMovies (TMDB).run.xml.template' '.run/YaMovies (TMDB).run.xml'
 
 ## async-02-future-wait
 
-Демо «три запроса разом». Здесь же приложение впервые выходит в сеть: до этой
+Демо «Три запроса разом». Здесь же приложение впервые выходит в сеть: до этой
 ветки оно жило на константной фикстуре.
 
-**Добавлено**
+**Где смотреть в приложении**
 
-- `modules/movie_network` перестал быть заглушкой:
-  - `HttpClientConfig` — базовый URL, ключ и таймауты (`connectTimeout`,
-    `receiveTimeout`). TMDB понимает оба вида ключей: короткий v3 уходит
-    в query-параметр `api_key`, длинный v4 — заголовком `Bearer`.
-  - `_NetworkHttpClient` — один `Dio` на приложение с `validateStatus`,
-    который отдаёт 4xx нам, а не бросает их сам.
-  - `ApiException` и маппинг `DioException` в четыре понятных типа:
-    `SocketException`, `TimeoutException`, `FormatException`, `ApiException`.
-    Это единственное место, где живёт слово «dio»; выше по слоям про него
-    уже никто не знает.
-- `lib/data/tmdb_config.dart` — ключ из `--dart-define`, базовые URL API
-  и картинок, сборка URL постера под нужный размер.
-- `lib/data/tmdb_api.dart` — DataSource: `topRated`, `genres`, `movieDetails`,
-  `movieCredits`, `similarMovies`.
-- `lib/domain/movie_details.dart` — `MovieDetails`, `CastMember`
-  и `MovieDetailsBundle` (три ответа плюс время загрузки и частичные ошибки).
-- `Movie.fromJson`, `Genre.fromJson`, `MoviesPageResponse.fromJson` — ручной
-  разбор со значениями по умолчанию, как на слайде «Из JSON в модель».
-- `lib/utils/error_messages.dart` — `describeLoadError` и `isRetryable`:
-  четыре типа ошибок дают четыре разных сообщения и решают, показывать ли
-  кнопку «повторить».
-- `lib/components/movie_poster.dart` — постеры по сети с `cacheWidth`,
-  размером под ячейку (`w185`/`w342`/`w500`) и фолбэком на локальные ассеты
-  для шести фильмов из офлайн-фикстуры.
-- Экран фильма вырос до трёх секций: детали, актёры (`/credits`)
-  и похожие (`/similar`), плюс плашка с секундомером загрузки.
+Экран фильма: плашка с секундомером под жанрами, ниже — секции «Cast»
+и «Similar movies», в самом низу — панель **«Demo: how the screen loads»**
+с тремя переключателями. Перезагрузка — кнопка в шапке экрана.
 
-**Изменено**
+**Файлы**
 
-- `MovieRepository` теперь отдаёт `MovieDetails`, `List<CastMember>`
-  и `List<Movie>`; `MovieRepositoryImpl` работает через `TmdbApi`.
-- `MovieRepositoryMock` остался как запасной путь без ключа и получил
-  искусственную задержку: без ожидания демо «сумма против максимума»
-  показывать нечего.
-- `MovieDetailsBloc` грузит экран двумя способами — тремя `await` подряд
-  или `Future.wait` — и замеряет время `Stopwatch`. Ветка без `eagerError`
-  собирает частичный результат: `Future.wait` дожидается всех, но всё равно
-  бросает первую ошибку, поэтому ошибку каждого запроса ловим на его
-  собственном future.
-- `MovieListBloc` грузит ленту и жанры через records `.wait`, разворачивает
-  `ParallelWaitError` и умеет состояние ошибки с кнопкой «повторить».
-  Хардкодный жанр «Science Fiction» из лекции про состояние убран — жанры
-  приходят с сервера.
-- `main.dart` — `runZonedGuarded` вокруг `runApp` и выбор репозитория:
-  есть ключ — сеть, нет — фикстура.
-- `test/widget_test.dart` — тесты поднимают мок с нулевой задержкой
-  и ждут первый кадр с данными через `_pumpApp`.
+| Файл | Что в нём |
+|---|---|
+| `lib/application/module/details/bloc/movie_details_bloc.dart` | Две стратегии загрузки: три `await` подряд или `Future.wait`; замер `Stopwatch`; ветка без `eagerError` собирает частичный результат, потому что `Future.wait` дожидается всех, но всё равно бросает первую ошибку |
+| `lib/data/tmdb_api.dart` | DataSource: `topRated`, `genres`, `movieDetails`, `movieCredits`, `similarMovies` |
+| `lib/data/movie_repository.dart` | `MovieRepositoryImpl` поверх `TmdbApi`; мок остался как запасной путь и получил задержку — без ожидания демо показывать нечего |
+| `lib/data/tmdb_config.dart` | Ключ из `--dart-define`, базовые URL API и картинок, сборка URL постера под размер |
+| `lib/domain/movie_details.dart` | `MovieDetails`, `CastMember`, `MovieDetailsBundle` (три ответа плюс время загрузки и частичные ошибки) |
+| `lib/domain/movie.dart`, `lib/domain/tmdb_responses.dart` | Разбор JSON руками со значениями по умолчанию; сравнение по значению через `equatable` |
+| `lib/utils/error_messages.dart` | `describeLoadError` и `isRetryable`: четыре типа ошибок дают четыре разных сообщения |
+| `lib/components/movie_poster.dart` | Постеры по сети: размер под ячейку (`w185`/`w342`/`w500`), `cacheWidth`, фолбэк на локальные ассеты |
+| `modules/movie_network/lib/src/http_client.dart`, `network_http_client.dart` | Один `Dio` на приложение, таймауты, `validateStatus`; единственное место, где `DioException` превращается в четыре понятных типа |
+| `modules/movie_network/lib/src/api_exception.dart` | `ApiException` — то, что видит приложение вместо ошибок dio |
+| `lib/application/module/details/_details_load_timing.dart` | Секундомер экрана и список частичных ошибок |
+| `lib/application/module/details/_cast_row.dart`, `_similar_movies_row.dart` | Секции актёров и похожих фильмов |
+| `lib/application/module/details/_details_demo_panel.dart` | Переключатели демо и кнопка перезагрузки экрана |
+| `lib/application/module/details/_movie_details_view.dart` | Состояние ошибки с кнопкой повтора — и те же переключатели, иначе сломанный запрос уводил бы в тупик |
+| `lib/application/module/list/bloc/movie_list_bloc.dart` | Лента и жанры грузятся records `.wait`, `ParallelWaitError` разворачивается в настоящую ошибку |
+| `lib/main.dart` | `runZonedGuarded` вокруг `runApp`, выбор репозитория: есть ключ — сеть, нет — фикстура |
+| `test/movie_details_bloc_test.dart` | Сумма против максимума, уход с экрана посреди загрузки, маппинг ошибки в состояние |
 
 **Как показывать**
 
