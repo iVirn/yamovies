@@ -15,7 +15,9 @@
 #
 # Ключ TMDB берётся из переменной окружения TMDB_API_KEY, а если её нет —
 # из конфигурации запуска Android Studio (.run/YaMovies (TMDB).run.xml).
-# Без ключа приложение работает на офлайн-фикстуре.
+# Самой конфигурации в репозитории нет — только шаблон рядом с ней: скопируйте
+# «.run/YaMovies (TMDB).run.xml.template» без расширения .template и подставьте
+# свой ключ. Без ключа приложение работает на офлайн-фикстуре.
 
 set -euo pipefail
 
@@ -223,6 +225,9 @@ api_key="$(resolve_api_key)"
 if [[ -z "$api_key" ]]; then
   echo "TMDB_API_KEY не найден — приложение поднимется на офлайн-фикстуре."
   echo "Передайте ключ: TMDB_API_KEY=<ключ> ./demo.sh"
+  echo "Либо создайте конфигурацию из шаблона:"
+  echo "  cp '$RUN_CONFIG.template' '$RUN_CONFIG' && \\"
+  echo "     sed -i '' 's/ВАШ_КЛЮЧ_TMDB/<ключ>/' '$RUN_CONFIG'"
 else
   echo "Ключ TMDB найден, идём в сеть."
 fi

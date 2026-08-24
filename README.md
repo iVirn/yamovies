@@ -48,6 +48,29 @@ See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for complete attribution.
 не переписывается заново, а обрастает тем, что разбирается на слайдах. Ветка
 `async-01` начинается от `feature/async-navigation-lecture`.
 
+## Модули: где живут сеть и база
+
+Приложение собрано из локальных пакетов — это наследство лекции про
+архитектуру. К четвёртой лекции оба были заглушками: `movie_network` знал
+только про `Dio`, `movie_database` — только про `drift`. Примеры наполняют
+их настоящим кодом, и граница пакета работает как проверка на утечку
+абстракции: всё, что выше, про `dio` и строки таблиц уже не знает.
+
+| Пакет | Что в нём появляется | В каком примере |
+|---|---|---|
+| `modules/movie_network` | `HttpClient` и `HttpClientConfig`, один `Dio` на приложение, таймауты, `ApiException` и превращение `DioException` в четыре понятных типа | 02 |
+| | `AuthInterceptor`, `LoggingInterceptor`, `RefreshInterceptor`, `TokenRefresher` с очередью ожидания, `TokenStorage`, шина событий `NetworkEventBus` | 06 |
+| `modules/movie_database` | `AppDatabase` на `drift`, таблицы `CachedMovies` / `CachedGenres` / `SyncMeta`, реактивный `watch()`, транзакции и кодогенерация | 08 |
+| | Таблицы `FavoriteMovies` и `PendingOps`, `toggleFavoriteWithOutbox` одной транзакцией, чтение очереди по порядку | 09 |
+
+Подключены они как обычные path-зависимости в `pubspec.yaml`, поэтому
+`flutter pub get` в корне тянет их сам, а кодогенерация drift запускается
+внутри пакета:
+
+```bash
+cd modules/movie_database && flutter pub run build_runner build
+```
+
 | Ветка | Раздел лекции | Что показывает |
 |---|---|---|
 | `async-01-event-loop-isolate` | 01. Event loop и Future | тяжёлый расчёт в UI-изоляте против `Isolate.run` |
@@ -60,14 +83,21 @@ See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for complete attribution.
 flutter run --dart-define=TMDB_API_KEY=<ключ>
 ```
 
-В Android Studio то же самое уже прописано в конфигурации запуска
-**YaMovies (TMDB)** — файл [.run/YaMovies (TMDB).run.xml](.run), она подхватится
-автоматически при открытии проекта.
+Для Android Studio рядом лежит шаблон конфигурации запуска
+`.run/YaMovies (TMDB).run.xml.template`. Скопируйте его без `.template`
+и подставьте свой ключ:
 
-> [!WARNING]
-> Ключ лежит в конфигурации запуска открытым текстом и попадает в историю git.
-> Это осознанный компромисс учебного репозитория: после курса ключ стоит
-> отозвать в кабинете TMDB.
+```bash
+cp '.run/YaMovies (TMDB).run.xml.template' '.run/YaMovies (TMDB).run.xml'
+# и заменить ВАШ_КЛЮЧ_TMDB на ключ из кабинета themoviedb.org
+```
+
+Готовая конфигурация не отслеживается git — ключ остаётся только у вас.
+`demo.sh` берёт ключ оттуда же или из переменной `TMDB_API_KEY`.
+
+> [!NOTE]
+> Ключ TMDB — это секрет, и в публичный репозиторий он не попадает.
+> Свой можно получить бесплатно: themoviedb.org → Settings → API.
 
 ## async-01-event-loop-isolate
 
