@@ -68,9 +68,17 @@ Future<TokenStorage> _createTokenStorage(DemoSettings demoSettings) async {
 
   // Ключ из сборки — это «результат логина»: кладём его в хранилище,
   // дальше сеть берёт токен только оттуда.
-  await storage.writeAccessToken(TmdbConfig.apiKey);
+  try {
+    await storage.writeAccessToken(TmdbConfig.apiKey);
 
-  return storage;
+    return storage;
+  } catch (error) {
+    // Keychain может быть недоступен: нет entitlement, чужая платформа,
+    // сломанная сборка. Приложение из-за этого падать не должно.
+    debugPrint('Хранилище токена недоступно ($error), работаем из памяти.');
+
+    return InMemoryTokenStorage(initialToken: TmdbConfig.apiKey);
+  }
 }
 
 /// Есть ключ — идём в TMDB, нет — работаем на офлайн-фикстуре.

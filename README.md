@@ -341,31 +341,25 @@ cp '.run/YaMovies (TMDB).run.xml.template' '.run/YaMovies (TMDB).run.xml'
 Демо «Где лежит токен»: одно и то же значение в двух хранилищах, и разница
 видна не в коде, а на диске.
 
-**Добавлено**
+**Где смотреть в приложении**
 
-- Зависимости `shared_preferences`, `flutter_secure_storage`, `path_provider`.
-- `lib/data/token_storages.dart`:
-  - `PrefsTokenStorage` на `SharedPreferencesAsync` (без кэша в памяти)
-    и метод `describeLocation()` — путь к XML на Android и к plist на iOS;
-  - `SecureTokenStorage` на `FlutterSecureStorage` с `deleteAll()` при
-    очистке — при разлогине чистим всё, а не один ключ;
-  - `SwitchableTokenStorage` — переключается между ними на лету (только ради
-    демо; в настоящем приложении владелец токена один) и кэширует значение
-    в памяти, потому что интерсептор дёргает токен на каждый запрос.
-- `lib/application/module/storage/token_storage_screen.dart` — экран демо:
-  записать токен в оба хранилища, перечитать оба, увидеть путь к файлу prefs
-  и готовую команду `adb exec-out run-as … cat shared_prefs/…xml`.
-- Кнопка «Where the token lives» в шапке ленты.
+Шапка ленты → кнопка с ключом → экран **«Where the token lives»**:
+кнопки «Write token to both» / «Clear both» / «Re-read», переключатель
+основного хранилища и две карточки — `SharedPreferences` (замок открыт)
+и `flutter_secure_storage` (замок закрыт). На карточке prefs — путь к файлу
+и готовая команда `adb`.
 
-**Изменено**
+**Файлы**
 
-- `main.dart` поднимает `WidgetsFlutterBinding` (плагины ходят через каналы
-  платформы) и кладёт ключ из сборки в хранилище: дальше сеть берёт токен
-  только оттуда — ровно как после логина.
-- `DemoSettings.useSecureStorage` решает, какое хранилище считается основным;
-  при переключении кэш токена сбрасывается.
-- Без ключа TMDB остаётся `InMemoryTokenStorage`, а экран демо честно говорит,
-  что прятать нечего.
+| Файл | Что в нём |
+|---|---|
+| `lib/data/token_storages.dart` | `PrefsTokenStorage` на `SharedPreferencesAsync` и `describeLocation()`; `SecureTokenStorage` с `deleteAll()` при очистке; `SwitchableTokenStorage` — переключается на лету (только ради демо) и кэширует значение в памяти, потому что интерсептор дёргает токен на каждый запрос. Слушатель настроек снимается в `dispose` |
+| `lib/application/module/storage/token_storage_screen.dart` | Экран демо: записать в оба хранилища, перечитать, увидеть путь к файлу и команду `adb exec-out run-as … cat shared_prefs/…xml` |
+| `lib/application/demo_settings.dart` | Флаг `useSecureStorage` |
+| `lib/main.dart` | Поднимает `WidgetsFlutterBinding` (плагины ходят через каналы платформы) и кладёт ключ из сборки в хранилище — ровно как после логина. Недоступное хранилище больше не роняет старт |
+| `lib/dependency_injection/dependency_container/dependency_container.dart` | Закрывает хранилище вместе с остальными зависимостями |
+| `android/app/build.gradle.kts` | `compileSdk = 37` и `minSdk ≥ 23` — этого требует `flutter_secure_storage` 11 |
+| `pubspec.yaml` | `shared_preferences`, `flutter_secure_storage`, `path_provider` |
 
 **Как показывать**
 
@@ -373,3 +367,9 @@ cp '.run/YaMovies (TMDB).run.xml.template' '.run/YaMovies (TMDB).run.xml'
 2. Вытащить XML с эмулятора командой с экрана: токен читается глазами.
 3. Файлы secure storage на том же устройстве — шифртекст; ключ лежит
    в Keystore и Keychain и не покидает устройство.
+
+> [!NOTE]
+> На macOS secure storage недоступен: Keychain требует настоящей Team ID,
+> а с ad-hoc подписью система убивает процесс. Приложение это переживает —
+> токен остаётся в памяти, о чём пишет в лог. Демо показывайте на Android
+> или iOS.

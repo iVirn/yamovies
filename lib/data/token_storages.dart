@@ -94,7 +94,7 @@ class SwitchableTokenStorage implements TokenStorage {
     required DemoSettings demoSettings,
   }) : _demoSettings = demoSettings {
     // Сменили хранилище — кэш в памяти больше не про него.
-    _demoSettings.addListener(() => _cachedToken = null);
+    _demoSettings.addListener(_dropCache);
   }
 
   final PrefsTokenStorage prefsStorage;
@@ -104,6 +104,12 @@ class SwitchableTokenStorage implements TokenStorage {
   /// Кэш в памяти: интерсептор дёргает токен на каждый запрос, и ходить
   /// за ним в Keystore каждый раз незачем.
   String? _cachedToken;
+
+  void _dropCache() => _cachedToken = null;
+
+  /// Снять слушателя. Подписка на чужой `ChangeNotifier` — та же утечка,
+  /// что и подписка на поток: живёт, пока её не отменят.
+  void dispose() => _demoSettings.removeListener(_dropCache);
 
   TokenStorage get active =>
       _demoSettings.useSecureStorage ? secureStorage : prefsStorage;

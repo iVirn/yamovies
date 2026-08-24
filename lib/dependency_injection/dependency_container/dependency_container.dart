@@ -3,6 +3,7 @@ import 'package:movie_network/movie_network.dart';
 import '../../application/demo_settings.dart';
 import '../../data/favorites_service.dart';
 import '../../data/movie_repository.dart';
+import '../../data/token_storages.dart';
 
 /// Контейнер зависимостей приложения.
 ///
@@ -36,6 +37,11 @@ final class DependencyContainer {
   /// При закрытии процесса ресурсы освободит ОС, но при hot restart
   /// и в тестах это единственный способ не оставить за собой подписки.
   Future<void> dispose() async {
+    final TokenStorage storage = tokenStorage;
+    if (storage is SwitchableTokenStorage) {
+      storage.dispose();
+    }
+
     await favoritesService.dispose();
     await networkEventBus.dispose();
     demoSettings.dispose();
