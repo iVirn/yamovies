@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yamovies/application/demo_settings.dart';
+import 'package:yamovies/data/favorites_service.dart';
 import 'package:yamovies/data/movie_repository.dart';
 import 'package:yamovies/dependency_injection/dependency_container/dependency_container.dart';
 import 'package:yamovies/dependency_injection/dependency_container/dependency_owner.dart';
@@ -12,6 +13,7 @@ void main() {
     final DemoSettings demoSettings = DemoSettings();
     final DependencyContainer container = DependencyContainer(
       movieRepository: const MovieRepositoryMock(),
+      favoritesService: FavoritesService(),
       demoSettings: demoSettings,
     );
 

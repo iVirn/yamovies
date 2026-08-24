@@ -11,7 +11,7 @@ class _MovieListView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Top Rated Movies'),
-        actions: const <Widget>[_TmdbAttributionButton()],
+        actions: const <Widget>[_FavoritesCounter(), _TmdbAttributionButton()],
       ),
       body: BlocBuilder<MovieListBloc, MovieListState>(
         buildWhen: (MovieListState previous, MovieListState current) =>

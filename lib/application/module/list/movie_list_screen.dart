@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../components/movie_poster.dart';
+import '../../../data/favorites_service.dart';
+import '../../../dependency_injection/dependency_container/dependency_container.dart';
 import '../../../dependency_injection/dependency_container/dependency_scope.dart';
 import '../../../domain/catalog_stats.dart';
 import '../../../domain/movie.dart';
@@ -16,6 +18,7 @@ import 'bloc/movie_list_bloc.dart';
 import 'movie_list_controller.dart';
 
 part '_catalog_stats_panel.dart';
+part '_favorites_counter.dart';
 part '_movie_card.dart';
 part '_movie_filters_header.dart';
 part '_movie_list_content.dart';
@@ -42,8 +45,10 @@ class _MovieListScreenState extends State<MovieListScreen> {
   @override
   void initState() {
     super.initState();
+    final DependencyContainer container = DependencyScope.of(context);
     _controller = MovieListController(
-      demoSettings: DependencyScope.of(context).demoSettings,
+      demoSettings: container.demoSettings,
+      favoritesService: container.favoritesService,
     );
   }
 

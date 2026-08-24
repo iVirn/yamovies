@@ -13,66 +13,87 @@ class _MovieListContent extends StatelessWidget {
     final Map<int, String> genreNamesById = controller.genreNamesById(genres);
     final List<Movie> filteredMovies = controller.filteredMovies(movies);
     final List<Genre> selectedGenres = controller.selectedGenres(genres);
+    final FavoritesService favorites =
+        DependencyScope.of(context).favoritesService;
 
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final int crossAxisCount = constraints.maxWidth >= 720 ? 3 : 2;
+    // Одна подписка на всю сетку, а не по одной на карточку: двадцать
+    // подписок на экране — двадцать поводов забыть про cancel. `StreamBuilder`
+    // подписывается и отписывается сам, но только на тот поток, который ему
+    // передали.
+    return StreamBuilder<Set<int>>(
+      stream: favorites.changes,
+      initialData: favorites.current,
+      builder: (BuildContext context, AsyncSnapshot<Set<int>> snapshot) {
+        final Set<int> favoriteIds = snapshot.data ?? const <int>{};
 
-        return CustomScrollView(
-          slivers: <Widget>[
-            SliverToBoxAdapter(
-              child: _TopMoviesGallery(
-                movies: movies,
-                genreNamesById: genreNamesById,
-                onMovieTap: (Movie movie) =>
-                    controller.openMovieDetails(context, movie, genres),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: _CatalogStatsPanel(movies: movies, controller: controller),
-            ),
-            SliverToBoxAdapter(
-              child: _MovieFiltersHeader(
-                moviesCount: filteredMovies.length,
-                selectedGenres: selectedGenres,
-                onOpenFilters: () => controller.openFilters(context, genres),
-                onClearFilters: controller.clearGenres,
-                onRemoveGenre: controller.toggleGenre,
-              ),
-            ),
-            if (filteredMovies.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: _MoviesEmptyState(
-                  onClearFilters: controller.clearGenres,
-                ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                sliver: SliverGrid.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossAxisCount,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.50,
+        return LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            final int crossAxisCount = constraints.maxWidth >= 720 ? 3 : 2;
+
+            return CustomScrollView(
+              slivers: <Widget>[
+                SliverToBoxAdapter(
+                  child: _TopMoviesGallery(
+                    movies: movies,
+                    genreNamesById: genreNamesById,
+                    onMovieTap: (Movie movie) =>
+                        controller.openMovieDetails(context, movie, genres),
                   ),
-                  itemCount: filteredMovies.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    final Movie movie = filteredMovies[index];
-
-                    return _MovieCard(
-                      movie: movie,
-                      genreNames: resolveMovieGenres(movie, genreNamesById),
-                      isFavorite: controller.isFavorite(movie.id),
-                      onFavoriteTap: () => controller.toggleFavorite(movie.id),
-                      onTap: () =>
-                          controller.openMovieDetails(context, movie, genres),
-                    );
-                  },
                 ),
-              ),
-          ],
+                SliverToBoxAdapter(
+                  child: _CatalogStatsPanel(
+                    movies: movies,
+                    controller: controller,
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: _MovieFiltersHeader(
+                    moviesCount: filteredMovies.length,
+                    selectedGenres: selectedGenres,
+                    onOpenFilters: () => controller.openFilters(context, genres),
+                    onClearFilters: controller.clearGenres,
+                    onRemoveGenre: controller.toggleGenre,
+                  ),
+                ),
+                if (filteredMovies.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _MoviesEmptyState(
+                      onClearFilters: controller.clearGenres,
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    sliver: SliverGrid.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.50,
+                      ),
+                      itemCount: filteredMovies.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final Movie movie = filteredMovies[index];
+
+                        return _MovieCard(
+                          movie: movie,
+                          genreNames: resolveMovieGenres(movie, genreNamesById),
+                          isFavorite: favoriteIds.contains(movie.id),
+                          onFavoriteTap: () =>
+                              controller.toggleFavorite(movie.id),
+                          onTap: () => controller.openMovieDetails(
+                            context,
+                            movie,
+                            genres,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            );
+          },
         );
       },
     );

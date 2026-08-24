@@ -75,6 +75,7 @@ cd modules/movie_database && flutter pub run build_runner build
 |---|---|---|
 | `async-01-event-loop-isolate` | 01. Event loop и Future | тяжёлый расчёт в UI-изоляте против `Isolate.run` |
 | `async-02-future-wait` | 01. Event loop и Future | живой TMDB, три запроса экрана фильма через `Future.wait` |
+| `async-03-stream-favorites` | 02. Stream | избранное как `StreamController` + `StreamBuilder` |
 
 ## Запуск
 
@@ -180,3 +181,39 @@ cp '.run/YaMovies (TMDB).run.xml.template' '.run/YaMovies (TMDB).run.xml'
 3. Включить «Break the cast request»: с `eagerError: true` экран падает сразу
    и предлагает повтор; выключить `eagerError` — экран собирается из того,
    что доехало, а ошибка показывается плашкой рядом с секундомером.
+
+## async-03-stream-favorites
+
+Раздел про `Stream`: избранное перестаёт быть полем внутри контроллера
+и становится источником, который живёт дольше одного ответа.
+
+**Где смотреть в приложении**
+
+Шапка ленты — счётчик избранного рядом с кнопками; сердечки на карточках;
+кнопка избранного на экране фильма. Всё это — подписчики одного потока.
+В консоли видно `[favorites] появился первый слушатель` и `слушателей
+не осталось`.
+
+**Файлы**
+
+| Файл | Что в нём |
+|---|---|
+| `lib/data/favorites_service.dart` | `StreamController<Set<int>>.broadcast` с `onListen` / `onCancel`, поток `changes`, поток одного фильма `watchIsFavorite(id)` с `distinct()` и синхронный снимок `current` |
+| `lib/application/module/list/_favorites_counter.dart` | Счётчик в шапке — второй подписчик того же потока, ради которого контроллер и сделан `broadcast` |
+| `lib/application/module/list/_movie_list_content.dart` | Один `StreamBuilder` на всю сетку (не по одному на карточку) с `initialData: favorites.current` |
+| `lib/application/module/list/movie_list_controller.dart` | Больше не хранит `Set<int>`: делегирует сервису и не зовёт `notifyListeners` — перерисовку вызывает событие потока |
+| `lib/application/module/details/movie_details_controller.dart` | Вместо копии флага отдаёт `Stream<bool>` и `isFavoriteNow` |
+| `lib/application/module/details/_details_favorite_action.dart`, `_details_favorite_button.dart` | Кнопки на `StreamBuilder`: лента и карточка фильма всегда согласованы |
+| `lib/application/module/details/movie_details_screen.dart` | Экран больше не принимает `isFavorite` и колбэк — он находит общий источник в контейнере |
+| `lib/dependency_injection/dependency_container/dependency_container.dart`, `lib/main.dart` | `FavoritesService` в контейнере, закрывается владельцем |
+| `test/widget_test.dart` | Поиск карточек переехал с иконок на tooltip: счётчик в шапке рисует ту же `Icons.favorite` |
+
+**Как показывать**
+
+1. Добавить фильм в избранное на ленте — счётчик в шапке меняется тем же
+   событием, не через `setState`.
+2. Открыть фильм, нажать «Add to favorites», вернуться назад: лента уже
+   перерисована, потому что источник один.
+3. В логах — `[favorites] появился первый слушатель` при входе на экран
+   и `слушателей не осталось` при выходе: это `onListen` / `onCancel`
+   контроллера.

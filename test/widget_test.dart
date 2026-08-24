@@ -4,6 +4,7 @@ import 'package:yamovies/application/demo_settings.dart';
 import 'package:yamovies/application/module/list/movie_list_screen.dart';
 import 'package:yamovies/application/movie_app.dart';
 import 'package:yamovies/components/poster_fallback.dart';
+import 'package:yamovies/data/favorites_service.dart';
 import 'package:yamovies/data/movie_repository.dart';
 import 'package:yamovies/dependency_injection/dependency_container/dependency_container.dart';
 import 'package:yamovies/dependency_injection/dependency_container/dependency_scope.dart';
@@ -24,6 +25,7 @@ Widget _appUnderTest() {
   return DependencyScope(
     container: DependencyContainer(
       movieRepository: _repository,
+      favoritesService: FavoritesService(),
       demoSettings: DemoSettings(),
     ),
     child: const MovieApp(),
@@ -68,9 +70,10 @@ void main() {
     expect(find.byType(CustomScrollView), findsOneWidget);
 
     // Each catalog card carries exactly one favorite toggle, so their count is
-    // a proxy for the number of rendered cards.
-    expect(find.byIcon(Icons.favorite_border), findsNWidgets(6));
-    expect(find.byIcon(Icons.favorite), findsNothing);
+    // a proxy for the number of rendered cards. The counter chip in the app bar
+    // uses the same icon, hence the tooltip lookup.
+    expect(find.byTooltip('Add to favorites'), findsNWidgets(6));
+    expect(find.byTooltip('Remove from favorites'), findsNothing);
     expect(find.text('The Shawshank Redemption'), findsWidgets);
     expect(find.text('Spirited Away'), findsWidgets);
 
@@ -144,19 +147,19 @@ void main() {
 
     await _pumpApp(tester);
 
-    expect(find.byIcon(Icons.favorite_border), findsNWidgets(6));
+    expect(find.byTooltip('Add to favorites'), findsNWidgets(6));
 
-    await tester.tap(find.byIcon(Icons.favorite_border).first);
+    await tester.tap(find.byTooltip('Add to favorites').first);
     await tester.pump();
 
-    expect(find.byIcon(Icons.favorite), findsOneWidget);
-    expect(find.byIcon(Icons.favorite_border), findsNWidgets(5));
+    expect(find.byTooltip('Remove from favorites'), findsOneWidget);
+    expect(find.byTooltip('Add to favorites'), findsNWidgets(5));
 
-    await tester.tap(find.byIcon(Icons.favorite));
+    await tester.tap(find.byTooltip('Remove from favorites'));
     await tester.pump();
 
-    expect(find.byIcon(Icons.favorite), findsNothing);
-    expect(find.byIcon(Icons.favorite_border), findsNWidgets(6));
+    expect(find.byTooltip('Remove from favorites'), findsNothing);
+    expect(find.byTooltip('Add to favorites'), findsNWidgets(6));
   });
 
   testWidgets('About and credits contains the TMDB attribution', (

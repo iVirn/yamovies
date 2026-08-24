@@ -1,4 +1,5 @@
 import '../../application/demo_settings.dart';
+import '../../data/favorites_service.dart';
 import '../../data/movie_repository.dart';
 
 /// Контейнер зависимостей приложения.
@@ -10,10 +11,12 @@ import '../../data/movie_repository.dart';
 final class DependencyContainer {
   const DependencyContainer({
     required this.movieRepository,
+    required this.favoritesService,
     required this.demoSettings,
   });
 
   final MovieRepository movieRepository;
+  final FavoritesService favoritesService;
   final DemoSettings demoSettings;
 
   /// Освободить всё, что живёт дольше одного экрана.

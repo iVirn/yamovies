@@ -1,7 +1,10 @@
+// ignore_for_file: prefer_initializing_formals
+
 import 'dart:isolate';
 
 import 'package:flutter/material.dart';
 
+import '../../../data/favorites_service.dart';
 import '../../../domain/catalog_stats.dart';
 import '../../../domain/movie.dart';
 import '../../../utils/movie_filters.dart';
@@ -24,11 +27,14 @@ class CatalogStatsRun {
 }
 
 class MovieListController extends Controller {
-  MovieListController({required DemoSettings demoSettings})
-    : _demoSettings = demoSettings; // ignore: prefer_initializing_formals
+  MovieListController({
+    required DemoSettings demoSettings,
+    required FavoritesService favoritesService,
+  }) : _demoSettings = demoSettings,
+       _favoritesService = favoritesService;
 
   final DemoSettings _demoSettings;
-  final Set<int> _favoriteMovieIds = <int>{};
+  final FavoritesService _favoritesService;
   final Set<int> _selectedGenreIds = <int>{};
 
   CatalogStatsRun? _statsRun;
@@ -73,7 +79,9 @@ class MovieListController extends Controller {
     notifyListeners();
   }
 
-  bool isFavorite(int movieId) => _favoriteMovieIds.contains(movieId);
+  /// Избранное больше не хранится в контроллере: источник правды — сервис,
+  /// а экран узнаёт об изменениях его потоком.
+  bool isFavorite(int movieId) => _favoritesService.isFavorite(movieId);
 
   Map<int, String> genreNamesById(List<Genre> genres) => <int, String>{
     for (final Genre genre in genres) genre.id: genre.name,
@@ -87,12 +95,8 @@ class MovieListController extends Controller {
       if (_selectedGenreIds.contains(genre.id)) genre,
   ];
 
-  void toggleFavorite(int movieId) {
-    if (!_favoriteMovieIds.add(movieId)) {
-      _favoriteMovieIds.remove(movieId);
-    }
-    notifyListeners();
-  }
+  /// `notifyListeners` здесь не нужен: перерисовку вызовет событие потока.
+  void toggleFavorite(int movieId) => _favoritesService.toggle(movieId);
 
   void toggleGenre(int genreId) {
     if (!_selectedGenreIds.add(genreId)) {
@@ -138,8 +142,6 @@ class MovieListController extends Controller {
           return MovieDetailsScreen(
             movieId: movie.id,
             genreNames: genreNames,
-            isFavorite: isFavorite(movie.id),
-            onFavoriteTap: () => toggleFavorite(movie.id),
           );
         },
       ),

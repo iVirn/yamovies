@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:movie_network/movie_network.dart';
 import 'package:yamovies/application/demo_settings.dart';
 import 'package:yamovies/application/movie_app.dart';
+import 'package:yamovies/data/favorites_service.dart';
 import 'package:yamovies/data/movie_repository.dart';
 import 'package:yamovies/data/tmdb_api.dart';
 import 'package:yamovies/data/tmdb_config.dart';
@@ -17,6 +18,7 @@ void main() {
     () {
       final DependencyContainer container = DependencyContainer(
         movieRepository: _createRepository(),
+        favoritesService: FavoritesService(),
         demoSettings: DemoSettings(),
       );
 

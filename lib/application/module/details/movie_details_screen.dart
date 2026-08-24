@@ -30,15 +30,11 @@ class MovieDetailsScreen extends StatefulWidget {
   const MovieDetailsScreen({
     required this.movieId,
     required this.genreNames,
-    required this.isFavorite,
-    required this.onFavoriteTap,
     super.key,
   });
 
   final int movieId;
   final List<String> genreNames;
-  final bool isFavorite;
-  final VoidCallback onFavoriteTap;
 
   @override
   State<MovieDetailsScreen> createState() => _MovieDetailsScreenState();
@@ -51,8 +47,8 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
   void initState() {
     super.initState();
     _controller = MovieDetailsController(
-      isFavorite: widget.isFavorite,
-      onFavoriteTap: widget.onFavoriteTap,
+      favoritesService: DependencyScope.of(context).favoritesService,
+      movieId: widget.movieId,
     );
   }
 

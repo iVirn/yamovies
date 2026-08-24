@@ -8,10 +8,11 @@ class _DetailsFavoriteButton extends StatelessWidget {
     final MovieDetailsController controller =
         ControllerScope.of<MovieDetailsController>(context, listen: false);
 
-    return ListenableBuilder(
-      listenable: controller,
-      builder: (BuildContext context, Widget? child) {
-        final bool isFavorite = controller.isFavorite;
+    return StreamBuilder<bool>(
+      stream: controller.isFavoriteChanges,
+      initialData: controller.isFavoriteNow,
+      builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+        final bool isFavorite = snapshot.data ?? false;
 
         return FilledButton.icon(
           onPressed: controller.toggleFavorite,
