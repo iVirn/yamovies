@@ -4,6 +4,7 @@ import 'package:yamovies/application/demo_settings.dart';
 import 'package:yamovies/application/module/list/movie_list_screen.dart';
 import 'package:yamovies/application/movie_app.dart';
 import 'package:yamovies/components/poster_fallback.dart';
+import 'package:movie_network/movie_network.dart';
 import 'package:yamovies/data/favorites_service.dart';
 import 'package:yamovies/data/movie_repository.dart';
 import 'package:yamovies/dependency_injection/dependency_container/dependency_container.dart';
@@ -18,6 +19,9 @@ const MovieRepositoryMock _repository = MovieRepositoryMock(
 );
 
 Widget _appUnderTest() {
+  final NetworkEventBus eventBus = NetworkEventBus();
+  final TokenStorage tokenStorage = InMemoryTokenStorage();
+
   // Здесь именно `DependencyScope`, а не `DependencyOwner`: зависимости
   // создаёт сам тест, он же их и закрывает. Владелец закрывал бы их при
   // снятии дерева — а закрытие базы ждёт реального ввода-вывода, которого
@@ -26,6 +30,13 @@ Widget _appUnderTest() {
     container: DependencyContainer(
       movieRepository: _repository,
       favoritesService: FavoritesService(),
+      tokenStorage: tokenStorage,
+      tokenRefresher: TokenRefresher(
+        storage: tokenStorage,
+        fetchFreshToken: () async => null,
+        eventBus: eventBus,
+      ),
+      networkEventBus: eventBus,
       demoSettings: DemoSettings(),
     ),
     child: const MovieApp(),

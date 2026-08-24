@@ -12,6 +12,7 @@ class _MovieListView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Top Rated Movies'),
         actions: const <Widget>[
+          _NetworkDemoAction(),
           _SearchAction(),
           _FavoritesCounter(),
           _TmdbAttributionButton(),
@@ -93,6 +94,23 @@ class _SearchAction extends StatelessWidget {
         ),
       ),
       icon: const Icon(Icons.search),
+    );
+  }
+}
+
+class _NetworkDemoAction extends StatelessWidget {
+  const _NetworkDemoAction();
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'Network demo: 401 and refresh',
+      onPressed: () => Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) => const NetworkDemoScreen(),
+        ),
+      ),
+      icon: const Icon(Icons.lan_outlined),
     );
   }
 }

@@ -3,25 +3,49 @@ part of 'http_client.dart';
 /// Один `Dio` на приложение: пул соединений, keep-alive и общие интерсепторы
 /// живут в нём. Создавать клиент в каждом методе — значит терять всё это разом.
 class _NetworkHttpClient implements HttpClient {
-  _NetworkHttpClient({required HttpClientConfig config, Dio? dio})
-    : _config = config,
-      dio = dio ?? Dio() {
-    this.dio.options = this.dio.options.copyWith(
+  _NetworkHttpClient({
+    required HttpClientConfig config,
+    required TokenStorage tokenStorage,
+    required TokenRefresher tokenRefresher,
+    required NetworkEventBus eventBus,
+    Dio? dio,
+    Dio? retryDio,
+  }) : dio = dio ?? Dio() {
+    final BaseOptions options = BaseOptions(
       baseUrl: config.baseUrl,
       connectTimeout: config.connectTimeout,
       receiveTimeout: config.receiveTimeout,
-      headers: <String, Object?>{
-        'Accept': 'application/json',
-        if (config.isBearerToken) 'Authorization': 'Bearer ${config.apiKey}',
-      },
-      // 4xx разбираем сами: без этого dio бросает DioException и на 401,
-      // и на 404, а нам нужен единый ApiException.
-      validateStatus: (int? code) => code != null && code < 500,
+      headers: <String, Object?>{'Accept': 'application/json'},
+      // 4xx разбираем сами — но 401 отдаём в ветку ошибок, чтобы до него
+      // добрался refresh-интерсептор.
+      validateStatus: (int? code) =>
+          code != null && code < 500 && code != 401,
     );
+
+    this.dio.options = options;
+
+    // Отдельный «голый» клиент для повторов: у него нет ни логов,
+    // ни refresh-интерсептора, поэтому повтор не уйдёт в рекурсию.
+    _retryClient = retryDio ?? Dio();
+    _retryClient.options = options;
+
+    // Порядок регистрации — это порядок вызова onRequest:
+    // сначала токен, потом логи.
+    this.dio.interceptors.addAll(<Interceptor>[
+      AuthInterceptor(storage: tokenStorage),
+      LoggingInterceptor(eventBus: eventBus),
+      RefreshInterceptor(
+        refresher: tokenRefresher,
+        storage: tokenStorage,
+        retryClient: _retryClient,
+        eventBus: eventBus,
+      ),
+    ]);
+    _retryClient.interceptors.add(LoggingInterceptor(eventBus: eventBus));
   }
 
-  final HttpClientConfig _config;
   final Dio dio;
+  late final Dio _retryClient;
 
   @override
   Future<Map<String, Object?>> getJson(
@@ -32,10 +56,7 @@ class _NetworkHttpClient implements HttpClient {
     try {
       final Response<Object?> response = await dio.get<Object?>(
         path,
-        queryParameters: <String, Object?>{
-          if (!_config.isBearerToken) 'api_key': _config.apiKey,
-          ...?queryParameters,
-        },
+        queryParameters: queryParameters,
         cancelToken: cancelToken,
       );
 

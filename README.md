@@ -78,6 +78,7 @@ cd modules/movie_database && flutter pub run build_runner build
 | `async-03-stream-favorites` | 02. Stream | избранное как `StreamController` + `StreamBuilder` |
 | `async-04-subscription-leak` | 02. Stream | `listen` без `cancel`: утечка, которую видно на экране |
 | `async-05-search-debounce-switchmap` | 03. Трансформации Stream | строка поиска: `debounce`, `switchMap` и отмена запроса |
+| `async-06-dio-interceptors-refresh` | 04. Сетевой слой | цепочка интерсепторов, 401 → refresh → повтор, очередь ожидания |
 
 ## Запуск
 
@@ -288,3 +289,48 @@ cp '.run/YaMovies (TMDB).run.xml.template' '.run/YaMovies (TMDB).run.xml'
    с паузами, гонка всё ещё воспроизводится: `asyncExpand` ничего не отменяет.
 3. Режим `switchMap`: в журнале видно `cancelled` у незавершённых запросов,
    на экране всегда ответ на последний ввод.
+
+## async-06-dio-interceptors-refresh
+
+Демо «401 и refresh». Токен подменяется на просроченный, TMDB отвечает
+настоящим 401 — и дальше всё честно: цепочка интерсепторов обновляет токен
+и повторяет запрос, а экран об этом не знает.
+
+> [!NOTE]
+> У TMDB v3 нет refresh-флоу: ключ выдаётся в кабинете и не протухает.
+> Поэтому «сервер авторизации» заменён на `TmdbAuthService`, который отдаёт
+> настоящий ключ после задержки в 700 мс. Всё остальное — 401 от живого
+> сервера, очередь ожидающих, повтор запроса, защита от рекурсии — настоящее.
+> Задержка тут не для красоты: без неё первый refresh успевает завершиться
+> раньше, чем прилетит второй 401, и очередь нечего показывать.
+
+**Где смотреть в приложении**
+
+Шапка ленты → кнопка с иконкой сети → экран **«Network: 401 → refresh»**:
+кнопки «Break token», «Restore token», «Load feed», «5 requests at once»,
+переключатель очереди, счётчик ушедших refresh и живой лог цепочки.
+
+**Файлы**
+
+| Файл | Что в нём |
+|---|---|
+| `modules/movie_network/lib/src/interceptors.dart` | `AuthInterceptor` (токен и `extra['startedAt']`), `LoggingInterceptor` (`onRequest` / `onResponse` / `onError` и метрики), `RefreshInterceptor` (401 → refresh → `handler.resolve(retried)`, пометка `retried`, разлогинивание при повторном 401) |
+| `modules/movie_network/lib/src/token_refresher.dart` | Очередь ожидания в одну строку: `_inFlight ??= _doRefresh().whenComplete(() => _inFlight = null)`. Флаг `useQueue` выключает её, чтобы показать «стадо 401» |
+| `modules/movie_network/lib/src/token_storage.dart` | `TokenStorage` — единственный владелец токена; `InMemoryTokenStorage` на этом шаге |
+| `modules/movie_network/lib/src/network_events.dart` | Шина событий сетевого слоя: интерсепторы пишут, экран демо читает |
+| `modules/movie_network/lib/src/network_http_client.dart` | Собирает цепочку в порядке регистрации и заводит отдельный «голый» `Dio` для повторов — иначе повтор ушёл бы в рекурсию. `validateStatus` пропускает 4xx, но не 401 |
+| `lib/data/tmdb_auth_service.dart` | Заглушка сервера авторизации |
+| `lib/application/module/network/network_demo_screen.dart` | Экран демо: кнопки, переключатель очереди, счётчик refresh |
+| `lib/application/module/network/_network_event_list.dart` | Лог цепочки: запрос, ошибка, refresh, повтор, ответ |
+| `lib/application/module/list/_movie_list_view.dart` | Кнопка сетевого демо в шапке |
+| `test/network_interceptors_test.dart` | Семь тестов на подменённом `HttpClientAdapter`: 401 → refresh → повтор, пять 401 против одного refresh, то же без очереди, разлогинивание, 500 → `ApiException`, обрыв → `SocketException`, состав лога |
+
+**Как показывать**
+
+1. «Break token» → «Load feed»: в логе `× movie/top_rated: badResponse 401`,
+   затем refresh, повтор и ответ. На экране — данные, пользователь ничего
+   не заметил.
+2. «Break token» → «5 requests at once» с включённой очередью: пять 401,
+   но refresh ушёл **один раз**.
+3. Выключить очередь, повторить: refresh уходит пять раз — сервер увидит
+   стадо и в реальной системе отзовёт токен.

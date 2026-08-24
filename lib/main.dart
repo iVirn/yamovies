@@ -7,6 +7,7 @@ import 'package:yamovies/application/movie_app.dart';
 import 'package:yamovies/data/favorites_service.dart';
 import 'package:yamovies/data/movie_repository.dart';
 import 'package:yamovies/data/tmdb_api.dart';
+import 'package:yamovies/data/tmdb_auth_service.dart';
 import 'package:yamovies/data/tmdb_config.dart';
 import 'package:yamovies/dependency_injection/dependency_container/dependency_container.dart';
 import 'package:yamovies/dependency_injection/dependency_container/dependency_owner.dart';
@@ -16,9 +17,27 @@ void main() {
   // никто не ждал, уходит в никуда и крашлитика её не увидит.
   runZonedGuarded<void>(
     () {
+      final NetworkEventBus eventBus = NetworkEventBus();
+      final TokenStorage tokenStorage = InMemoryTokenStorage(
+        initialToken: TmdbConfig.hasApiKey ? TmdbConfig.apiKey : null,
+      );
+      const TmdbAuthService authService = TmdbAuthService();
+      final TokenRefresher tokenRefresher = TokenRefresher(
+        storage: tokenStorage,
+        fetchFreshToken: authService.issueAccessToken,
+        eventBus: eventBus,
+      );
+
       final DependencyContainer container = DependencyContainer(
-        movieRepository: _createRepository(),
+        movieRepository: _createRepository(
+          tokenStorage: tokenStorage,
+          tokenRefresher: tokenRefresher,
+          eventBus: eventBus,
+        ),
         favoritesService: FavoritesService(),
+        tokenStorage: tokenStorage,
+        tokenRefresher: tokenRefresher,
+        networkEventBus: eventBus,
         demoSettings: DemoSettings(),
       );
 
@@ -33,7 +52,11 @@ void main() {
 ///
 /// Ключ передаётся сборкой:
 /// `flutter run --dart-define=TMDB_API_KEY=...`
-MovieRepository _createRepository() {
+MovieRepository _createRepository({
+  required TokenStorage tokenStorage,
+  required TokenRefresher tokenRefresher,
+  required NetworkEventBus eventBus,
+}) {
   if (!TmdbConfig.hasApiKey) {
     debugPrint(
       'TMDB_API_KEY не передан: работаем на офлайн-фикстуре. '
@@ -43,14 +66,14 @@ MovieRepository _createRepository() {
     return const MovieRepositoryMock();
   }
 
-  // Один клиент на приложение: пул соединений, keep-alive и — дальше
-  // по курсу — общие интерсепторы.
+  // Один клиент на приложение: пул соединений, keep-alive и общая цепочка
+  // интерсепторов.
   final HttpClient httpClient = HttpClient.create(
     HttpClientType.network,
-    config: const HttpClientConfig(
-      baseUrl: TmdbConfig.baseUrl,
-      apiKey: TmdbConfig.apiKey,
-    ),
+    config: const HttpClientConfig(baseUrl: TmdbConfig.baseUrl),
+    tokenStorage: tokenStorage,
+    tokenRefresher: tokenRefresher,
+    eventBus: eventBus,
   );
 
   return MovieRepositoryImpl(api: TmdbApi(httpClient: httpClient));

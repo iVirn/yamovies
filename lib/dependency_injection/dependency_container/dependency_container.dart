@@ -1,3 +1,5 @@
+import 'package:movie_network/movie_network.dart';
+
 import '../../application/demo_settings.dart';
 import '../../data/favorites_service.dart';
 import '../../data/movie_repository.dart';
@@ -12,11 +14,21 @@ final class DependencyContainer {
   const DependencyContainer({
     required this.movieRepository,
     required this.favoritesService,
+    required this.tokenStorage,
+    required this.tokenRefresher,
+    required this.networkEventBus,
     required this.demoSettings,
   });
 
   final MovieRepository movieRepository;
   final FavoritesService favoritesService;
+
+  /// Единственный владелец токена — его же подменяет демо «401 и refresh».
+  final TokenStorage tokenStorage;
+  final TokenRefresher tokenRefresher;
+
+  /// Шина событий сетевого слоя: интерсепторы пишут, экран демо читает.
+  final NetworkEventBus networkEventBus;
   final DemoSettings demoSettings;
 
   /// Освободить всё, что живёт дольше одного экрана.
@@ -24,6 +36,8 @@ final class DependencyContainer {
   /// При закрытии процесса ресурсы освободит ОС, но при hot restart
   /// и в тестах это единственный способ не оставить за собой подписки.
   Future<void> dispose() async {
+    await favoritesService.dispose();
+    await networkEventBus.dispose();
     demoSettings.dispose();
   }
 }
