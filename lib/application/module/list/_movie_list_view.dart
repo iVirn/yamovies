@@ -12,6 +12,7 @@ class _MovieListView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Top Rated Movies'),
         actions: const <Widget>[
+          _TokenStorageAction(),
           _NetworkDemoAction(),
           _SearchAction(),
           _FavoritesCounter(),
@@ -111,6 +112,23 @@ class _NetworkDemoAction extends StatelessWidget {
         ),
       ),
       icon: const Icon(Icons.lan_outlined),
+    );
+  }
+}
+
+class _TokenStorageAction extends StatelessWidget {
+  const _TokenStorageAction();
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'Where the token lives',
+      onPressed: () => Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) => const TokenStorageScreen(),
+        ),
+      ),
+      icon: const Icon(Icons.key_outlined),
     );
   }
 }

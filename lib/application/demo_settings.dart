@@ -13,6 +13,7 @@ class DemoSettings extends ChangeNotifier {
   bool _eagerErrorOnDetails = true;
   bool _breakCastRequest = false;
   bool _cancelSubscriptionOnDispose = false;
+  bool _useSecureStorage = true;
 
   /// Демо «UI замирает»: считать индекс каталога в отдельном изоляте
   /// (`Isolate.run`) вместо UI-изолята.
@@ -73,6 +74,18 @@ class DemoSettings extends ChangeNotifier {
     }
 
     _cancelSubscriptionOnDispose = value;
+    notifyListeners();
+  }
+
+  /// Демо «где лежит токен»: какое хранилище считается основным.
+  bool get useSecureStorage => _useSecureStorage;
+
+  set useSecureStorage(bool value) {
+    if (_useSecureStorage == value) {
+      return;
+    }
+
+    _useSecureStorage = value;
     notifyListeners();
   }
 }

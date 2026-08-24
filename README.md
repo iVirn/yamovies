@@ -79,6 +79,7 @@ cd modules/movie_database && flutter pub run build_runner build
 | `async-04-subscription-leak` | 02. Stream | `listen` без `cancel`: утечка, которую видно на экране |
 | `async-05-search-debounce-switchmap` | 03. Трансформации Stream | строка поиска: `debounce`, `switchMap` и отмена запроса |
 | `async-06-dio-interceptors-refresh` | 04. Сетевой слой | цепочка интерсепторов, 401 → refresh → повтор, очередь ожидания |
+| `async-07-token-storage` | 05. Локальное хранение | `SharedPreferences` против `flutter_secure_storage` |
 
 ## Запуск
 
@@ -334,3 +335,41 @@ cp '.run/YaMovies (TMDB).run.xml.template' '.run/YaMovies (TMDB).run.xml'
    но refresh ушёл **один раз**.
 3. Выключить очередь, повторить: refresh уходит пять раз — сервер увидит
    стадо и в реальной системе отзовёт токен.
+
+## async-07-token-storage
+
+Демо «Где лежит токен»: одно и то же значение в двух хранилищах, и разница
+видна не в коде, а на диске.
+
+**Добавлено**
+
+- Зависимости `shared_preferences`, `flutter_secure_storage`, `path_provider`.
+- `lib/data/token_storages.dart`:
+  - `PrefsTokenStorage` на `SharedPreferencesAsync` (без кэша в памяти)
+    и метод `describeLocation()` — путь к XML на Android и к plist на iOS;
+  - `SecureTokenStorage` на `FlutterSecureStorage` с `deleteAll()` при
+    очистке — при разлогине чистим всё, а не один ключ;
+  - `SwitchableTokenStorage` — переключается между ними на лету (только ради
+    демо; в настоящем приложении владелец токена один) и кэширует значение
+    в памяти, потому что интерсептор дёргает токен на каждый запрос.
+- `lib/application/module/storage/token_storage_screen.dart` — экран демо:
+  записать токен в оба хранилища, перечитать оба, увидеть путь к файлу prefs
+  и готовую команду `adb exec-out run-as … cat shared_prefs/…xml`.
+- Кнопка «Where the token lives» в шапке ленты.
+
+**Изменено**
+
+- `main.dart` поднимает `WidgetsFlutterBinding` (плагины ходят через каналы
+  платформы) и кладёт ключ из сборки в хранилище: дальше сеть берёт токен
+  только оттуда — ровно как после логина.
+- `DemoSettings.useSecureStorage` решает, какое хранилище считается основным;
+  при переключении кэш токена сбрасывается.
+- Без ключа TMDB остаётся `InMemoryTokenStorage`, а экран демо честно говорит,
+  что прятать нечего.
+
+**Как показывать**
+
+1. «Write token to both» — на экране оба значения видны одинаково.
+2. Вытащить XML с эмулятора командой с экрана: токен читается глазами.
+3. Файлы secure storage на том же устройстве — шифртекст; ключ лежит
+   в Keystore и Keychain и не покидает устройство.

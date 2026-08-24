@@ -17,6 +17,7 @@ import '../../leak_probe.dart';
 import '../../demo_settings.dart';
 import '../network/network_demo_screen.dart';
 import '../search/movie_search_screen.dart';
+import '../storage/token_storage_screen.dart';
 import 'bloc/movie_list_bloc.dart';
 import 'movie_list_controller.dart';
 
