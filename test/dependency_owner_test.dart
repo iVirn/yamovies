@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yamovies/application/demo_settings.dart';
+import 'package:movie_database/movie_database.dart';
 import 'package:movie_network/movie_network.dart';
 import 'package:yamovies/data/favorites_service.dart';
 import 'package:yamovies/data/movie_repository.dart';
@@ -14,8 +15,10 @@ void main() {
     final DemoSettings demoSettings = DemoSettings();
     final NetworkEventBus eventBus = NetworkEventBus();
     final TokenStorage tokenStorage = InMemoryTokenStorage();
+    final AppDatabase database = AppDatabase(NativeDatabase.memory());
     final DependencyContainer container = DependencyContainer(
       movieRepository: const MovieRepositoryMock(),
+      database: database,
       favoritesService: FavoritesService(),
       tokenStorage: tokenStorage,
       tokenRefresher: TokenRefresher(
@@ -36,7 +39,12 @@ void main() {
     demoSettings.computeStatsInIsolate = true;
     expect(demoSettings.computeStatsInIsolate, isTrue);
 
-    await tester.pumpWidget(const SizedBox.shrink());
+    // Снимаем дерево в реальном времени: закрытие базы — настоящий
+    // ввод-вывод, и в фиктивном времени теста оно бы не завершилось.
+    await tester.runAsync(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
     await tester.pump();
 
     // Владелец ушёл — контейнер закрыт: обращение к закрытому

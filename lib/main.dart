@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:movie_database/movie_database.dart';
 import 'package:movie_network/movie_network.dart';
 import 'package:yamovies/application/demo_settings.dart';
 import 'package:yamovies/application/movie_app.dart';
 import 'package:yamovies/data/favorites_service.dart';
+import 'package:yamovies/data/cached_movie_repository.dart';
 import 'package:yamovies/data/movie_repository.dart';
 import 'package:yamovies/data/tmdb_api.dart';
 import 'package:yamovies/data/tmdb_auth_service.dart';
@@ -23,6 +25,7 @@ void main() {
       WidgetsFlutterBinding.ensureInitialized();
 
       final NetworkEventBus eventBus = NetworkEventBus();
+      final AppDatabase database = AppDatabase();
       final DemoSettings demoSettings = DemoSettings();
       final TokenStorage tokenStorage = await _createTokenStorage(demoSettings);
       const TmdbAuthService authService = TmdbAuthService();
@@ -33,11 +36,15 @@ void main() {
       );
 
       final DependencyContainer container = DependencyContainer(
-        movieRepository: _createRepository(
-          tokenStorage: tokenStorage,
-          tokenRefresher: tokenRefresher,
-          eventBus: eventBus,
+        movieRepository: CachedMovieRepository(
+          remote: _createRepository(
+            tokenStorage: tokenStorage,
+            tokenRefresher: tokenRefresher,
+            eventBus: eventBus,
+          ),
+          database: database,
         ),
+        database: database,
         favoritesService: FavoritesService(),
         tokenStorage: tokenStorage,
         tokenRefresher: tokenRefresher,

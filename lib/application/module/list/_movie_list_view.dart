@@ -12,6 +12,7 @@ class _MovieListView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Top Rated Movies'),
         actions: const <Widget>[
+          _CacheInspectorAction(),
           _TokenStorageAction(),
           _NetworkDemoAction(),
           _SearchAction(),
@@ -129,6 +130,23 @@ class _TokenStorageAction extends StatelessWidget {
         ),
       ),
       icon: const Icon(Icons.key_outlined),
+    );
+  }
+}
+
+class _CacheInspectorAction extends StatelessWidget {
+  const _CacheInspectorAction();
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'Local cache',
+      onPressed: () => Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) => const CacheInspectorScreen(),
+        ),
+      ),
+      icon: const Icon(Icons.storage_outlined),
     );
   }
 }

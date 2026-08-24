@@ -15,6 +15,7 @@ import '../../../utils/tmdb_attribution.dart';
 import '../../controller_scope.dart';
 import '../../leak_probe.dart';
 import '../../demo_settings.dart';
+import '../cache/cache_inspector_screen.dart';
 import '../network/network_demo_screen.dart';
 import '../search/movie_search_screen.dart';
 import '../storage/token_storage_screen.dart';

@@ -1,3 +1,4 @@
+import 'package:movie_database/movie_database.dart';
 import 'package:movie_network/movie_network.dart';
 
 import '../../application/demo_settings.dart';
@@ -14,6 +15,7 @@ import '../../data/token_storages.dart';
 final class DependencyContainer {
   const DependencyContainer({
     required this.movieRepository,
+    required this.database,
     required this.favoritesService,
     required this.tokenStorage,
     required this.tokenRefresher,
@@ -22,6 +24,9 @@ final class DependencyContainer {
   });
 
   final MovieRepository movieRepository;
+
+  /// Локальный кэш: drift поверх SQLite.
+  final AppDatabase database;
   final FavoritesService favoritesService;
 
   /// Единственный владелец токена — его же подменяет демо «401 и refresh».
@@ -43,6 +48,7 @@ final class DependencyContainer {
     }
 
     await favoritesService.dispose();
+    await database.close();
     await networkEventBus.dispose();
     demoSettings.dispose();
   }

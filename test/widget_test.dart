@@ -4,6 +4,7 @@ import 'package:yamovies/application/demo_settings.dart';
 import 'package:yamovies/application/module/list/movie_list_screen.dart';
 import 'package:yamovies/application/movie_app.dart';
 import 'package:yamovies/components/poster_fallback.dart';
+import 'package:movie_database/movie_database.dart';
 import 'package:movie_network/movie_network.dart';
 import 'package:yamovies/data/favorites_service.dart';
 import 'package:yamovies/data/movie_repository.dart';
@@ -29,6 +30,7 @@ Widget _appUnderTest() {
   return DependencyScope(
     container: DependencyContainer(
       movieRepository: _repository,
+      database: AppDatabase(NativeDatabase.memory()),
       favoritesService: FavoritesService(),
       tokenStorage: tokenStorage,
       tokenRefresher: TokenRefresher(

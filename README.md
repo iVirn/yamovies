@@ -80,6 +80,7 @@ cd modules/movie_database && flutter pub run build_runner build
 | `async-05-search-debounce-switchmap` | 03. Трансформации Stream | строка поиска: `debounce`, `switchMap` и отмена запроса |
 | `async-06-dio-interceptors-refresh` | 04. Сетевой слой | цепочка интерсепторов, 401 → refresh → повтор, очередь ожидания |
 | `async-07-token-storage` | 05. Локальное хранение | `SharedPreferences` против `flutter_secure_storage` |
+| `async-08-local-cache-drift` | 05. Локальное хранение | кэш ленты на `drift`: таблицы, транзакции, `watch()` |
 
 ## Запуск
 
@@ -373,3 +374,36 @@ cp '.run/YaMovies (TMDB).run.xml.template' '.run/YaMovies (TMDB).run.xml'
 > а с ad-hoc подписью система убивает процесс. Приложение это переживает —
 > токен остаётся в памяти, о чём пишет в лог. Демо показывайте на Android
 > или iOS.
+
+## async-08-local-cache-drift
+
+Реляционный кэш: у ленты появляется своя SQLite-база на `drift`.
+
+**Где смотреть в приложении**
+
+Шапка ленты → кнопка с иконкой хранилища → экран **«Local cache»**: сколько
+фильмов лежит в SQLite, время последней синхронизации, список записей
+со временем попадания в кэш и кнопка очистки в шапке.
+
+**Файлы**
+
+| Файл | Что в нём |
+|---|---|
+| `modules/movie_database/lib/src/tables.dart` | `CachedMovies`, `CachedGenres`, `SyncMeta` с `@DataClassName` — без него drift сгенерировал бы `CachedMovy` |
+| `modules/movie_database/lib/src/app_database.dart` | `AppDatabase` на `driftDatabase(name: …)`: реактивные `watchMovies()` / `watchGenres()`, `upsertMovies` одной транзакцией (подписчик видит страницу целиком, а не по одному фильму), `lastSyncAt`, `countMovies`, `clearCache` |
+| `modules/movie_database/lib/src/app_database.g.dart` | Сгенерированный код drift (`build_runner`) |
+| `modules/movie_database/pubspec.yaml` | `drift_flutter`, `drift_dev`, `build_runner` |
+| `lib/data/cached_movie_repository.dart` | Оборачивает любой `MovieRepository`: ответ сети складывается в базу, а при `SocketException` и `TimeoutException` лента приходит из кэша. Здесь же `CacheSnapshot` — витрина кэша для экрана: доменные модели, а не строки таблиц |
+| `lib/application/module/cache/cache_inspector_screen.dart` | Экран «Local cache» на потоке репозитория. Ни одного `setState` для списка — запись в таблицу сама толкает поток |
+| `lib/application/module/list/_movie_list_view.dart` | Кнопка экрана кэша в шапке |
+| `lib/main.dart`, `dependency_container.dart` | База создаётся в `main`, живёт в контейнере и закрывается владельцем |
+| `test/cached_repository_test.dart` | Четыре теста на `NativeDatabase.memory()`: настоящая БД без единого файла |
+
+**Как показывать**
+
+1. Открыть ленту, затем экран «Local cache»: в SQLite столько же фильмов,
+   сколько на экране, видно время синхронизации.
+2. Включить режим полёта и перезапустить ленту: данные на месте, потому что
+   репозиторий отдал кэш.
+3. «Clear cache» при выключенной сети — лента честно показывает ошибку:
+   пустой кэш скрывать нечем.
