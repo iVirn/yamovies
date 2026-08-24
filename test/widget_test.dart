@@ -11,7 +11,10 @@ import 'package:yamovies/domain/movie.dart';
 import 'package:yamovies/utils/movie_formatters.dart';
 import 'package:yamovies/utils/tmdb_attribution.dart';
 
-const MovieRepositoryMock _repository = MovieRepositoryMock();
+// Без задержек: в тестах ждать нечего, а сеть подменена фикстурой.
+const MovieRepositoryMock _repository = MovieRepositoryMock(
+  latency: Duration.zero,
+);
 
 Widget _appUnderTest() {
   // Здесь именно `DependencyScope`, а не `DependencyOwner`: зависимости
@@ -34,6 +37,12 @@ Future<void> _pumpFrames(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 350));
 }
 
+/// Поднять приложение и дождаться, пока репозиторий отдаст фикстуру.
+Future<void> _pumpApp(WidgetTester tester) async {
+  await tester.pumpWidget(_appUnderTest());
+  await _pumpFrames(tester);
+}
+
 void main() {
   testWidgets('catalog shows six movies at 320 px', (
     WidgetTester tester,
@@ -43,8 +52,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(_appUnderTest());
-    await tester.pump();
+    await _pumpApp(tester);
 
     expect(find.byType(MaterialApp), findsOneWidget);
     expect(find.byType(MovieListScreen), findsOneWidget);
@@ -84,8 +92,7 @@ void main() {
 
     for (final double width in <double>[320, 390]) {
       tester.view.physicalSize = Size(width, 640);
-      await tester.pumpWidget(_appUnderTest());
-      await tester.pump();
+      await _pumpApp(tester);
 
       await tester.drag(find.byType(CustomScrollView), const Offset(0, -900));
       await _pumpFrames(tester);
@@ -135,8 +142,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(_appUnderTest());
-    await tester.pump();
+    await _pumpApp(tester);
 
     expect(find.byIcon(Icons.favorite_border), findsNWidgets(6));
 
@@ -156,8 +162,7 @@ void main() {
   testWidgets('About and credits contains the TMDB attribution', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(_appUnderTest());
-    await tester.pump();
+    await _pumpApp(tester);
 
     await tester.tap(find.byTooltip('About and credits'));
     await _pumpFrames(tester);

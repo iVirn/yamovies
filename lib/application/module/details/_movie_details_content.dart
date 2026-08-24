@@ -1,15 +1,18 @@
 part of 'movie_details_screen.dart';
 
 class _MovieDetailsContent extends StatelessWidget {
-  const _MovieDetailsContent({required this.movie, required this.genreNames});
+  const _MovieDetailsContent({required this.bundle, required this.genreNames});
 
-  final Movie movie;
+  final MovieDetailsBundle bundle;
   final List<String> genreNames;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final String? posterAssetPath = moviePosterAssets[movie.id];
+    final MovieDetails details = bundle.details;
+    final List<String> genres = details.genres.isEmpty
+        ? genreNames
+        : <String>[for (final Genre genre in details.genres) genre.name];
 
     return Scaffold(
       body: CustomScrollView(
@@ -23,12 +26,13 @@ class _MovieDetailsContent extends StatelessWidget {
             backgroundColor: Colors.black,
             foregroundColor: Colors.white,
             actions: const <Widget>[
+              _DetailsReloadAction(),
               _DetailsFavoriteAction(),
               SizedBox(width: 8),
             ],
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                movie.title,
+                details.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -42,7 +46,7 @@ class _MovieDetailsContent extends StatelessWidget {
               background: Stack(
                 fit: StackFit.expand,
                 children: <Widget>[
-                  _DetailsPoster(movie: movie, posterAssetPath: posterAssetPath),
+                  _DetailsPoster(details: details),
                   DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -66,9 +70,19 @@ class _MovieDetailsContent extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    movie.title,
+                    details.title,
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
+                  if (details.tagline.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 4),
+                    Text(
+                      details.tagline,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
@@ -76,16 +90,21 @@ class _MovieDetailsContent extends StatelessWidget {
                     children: <Widget>[
                       _MetaPill(
                         icon: Icons.star,
-                        label: movie.voteAverage.toStringAsFixed(1),
+                        label: details.voteAverage.toStringAsFixed(1),
                         iconColor: Colors.amber,
                       ),
                       _MetaPill(
                         icon: Icons.calendar_today_outlined,
-                        label: releaseYear(movie),
+                        label: releaseYearOf(details.releaseDate),
                       ),
+                      if (details.runtimeMinutes != null)
+                        _MetaPill(
+                          icon: Icons.schedule,
+                          label: '${details.runtimeMinutes} min',
+                        ),
                       _MetaPill(
                         icon: Icons.how_to_vote_outlined,
-                        label: '${movie.voteCount} votes',
+                        label: '${details.voteCount} votes',
                       ),
                     ],
                   ),
@@ -94,21 +113,36 @@ class _MovieDetailsContent extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: <Widget>[
-                      for (final String genreName in genreNames)
+                      for (final String genreName in genres)
                         Chip(label: Text(genreName)),
                     ],
                   ),
+                  const SizedBox(height: 20),
+                  _DetailsLoadTiming(bundle: bundle),
                   const SizedBox(height: 24),
                   Text(
                     'Overview',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
-                  _ExpandableOverview(text: detailsOverview(movie)),
-                  const SizedBox(height: 24),
+                  _ExpandableOverview(text: detailsOverviewText(details)),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(child: _CastRow(cast: bundle.cast)),
+          SliverToBoxAdapter(child: _SimilarMoviesRow(movies: bundle.similar)),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
                   const _DetailsFavoriteButton(),
                   const SizedBox(height: 24),
                   Divider(color: colorScheme.outlineVariant),
+                  const SizedBox(height: 12),
+                  const _DetailsDemoPanel(),
                 ],
               ),
             ),

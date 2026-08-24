@@ -1,25 +1,18 @@
 part of 'movie_list_screen.dart';
 
 class _TopMoviePoster extends StatelessWidget {
-  const _TopMoviePoster({required this.movie, required this.posterAssetPath});
+  const _TopMoviePoster({required this.movie});
 
   final Movie movie;
-  final String? posterAssetPath;
 
   @override
   Widget build(BuildContext context) {
-    final String? assetPath = posterAssetPath;
-    if (assetPath == null) {
-      return const PosterFallback();
-    }
-
-    return Image.asset(
-      assetPath,
-      fit: BoxFit.cover,
-      semanticLabel: '${movie.title} poster',
-      errorBuilder:
-          (BuildContext context, Object error, StackTrace? stackTrace) =>
-              const PosterFallback(),
+    return MoviePoster(
+      movieId: movie.id,
+      posterPath: movie.posterPath,
+      title: movie.title,
+      size: 'w185',
+      cacheWidth: 288,
     );
   }
 }

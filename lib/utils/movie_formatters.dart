@@ -1,13 +1,19 @@
 import '../domain/movie.dart';
+import '../domain/movie_details.dart';
 
-String releaseYear(Movie movie) {
-  final String? releaseDate = movie.releaseDate;
+String releaseYear(Movie movie) => releaseYearOf(movie.releaseDate);
+
+String releaseYearOf(String? releaseDate) {
   if (releaseDate == null) {
     return '—';
   }
 
   return DateTime.tryParse(releaseDate)?.year.toString() ?? '—';
 }
+
+String detailsOverviewText(MovieDetails details) => details.overview.isEmpty
+    ? 'TMDB has no overview for this movie yet.'
+    : details.overview;
 
 String formatGenreNames(List<String> genreNames) {
   if (genreNames.isEmpty) {

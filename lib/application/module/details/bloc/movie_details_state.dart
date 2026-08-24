@@ -9,7 +9,17 @@ final class MovieDetailsLoadingState extends MovieDetailsState {
 }
 
 final class MovieDetailsSuccessState extends MovieDetailsState {
-  const MovieDetailsSuccessState({required this.movie});
+  const MovieDetailsSuccessState({required this.bundle});
 
-  final Movie movie;
+  final MovieDetailsBundle bundle;
+}
+
+final class MovieDetailsFailureState extends MovieDetailsState {
+  const MovieDetailsFailureState({
+    required this.message,
+    required this.canRetry,
+  });
+
+  final String message;
+  final bool canRetry;
 }

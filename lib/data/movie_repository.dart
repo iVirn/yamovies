@@ -1,8 +1,9 @@
-import 'package:movie_database/movie_database.dart';
 import 'package:movie_network/movie_network.dart';
 
 import '../domain/movie.dart';
+import '../domain/movie_details.dart';
 import '../domain/tmdb_responses.dart';
+import 'tmdb_api.dart';
 
 abstract interface class MovieRepository {
   const MovieRepository();
@@ -11,39 +12,108 @@ abstract interface class MovieRepository {
 
   Future<MovieGenresResponse> getGenres();
 
-  Future<Movie> getMovieById(int id);
+  Future<MovieDetails> getMovieDetails(int id);
+
+  Future<List<CastMember>> getMovieCast(int id);
+
+  Future<List<Movie>> getSimilarMovies(int id);
 }
 
+/// Единственная точка правды для экранов: отдаёт доменные модели и ничего
+/// не знает о том, что под ней dio.
 final class MovieRepositoryImpl implements MovieRepository {
-  const MovieRepositoryImpl({required this.httpClient, required this.database});
+  const MovieRepositoryImpl({required this.api});
 
-  final HttpClient httpClient;
-  final Database database;
-
-  @override
-  Future<MoviesPageResponse> getMovies() async => throw UnimplementedError();
+  final TmdbApi api;
 
   @override
-  Future<MovieGenresResponse> getGenres() async => throw UnimplementedError();
+  Future<MoviesPageResponse> getMovies() => api.topRated();
 
   @override
-  Future<Movie> getMovieById(int id) async => throw UnimplementedError();
+  Future<MovieGenresResponse> getGenres() => api.genres();
+
+  @override
+  Future<MovieDetails> getMovieDetails(int id) => api.movieDetails(id);
+
+  @override
+  Future<List<CastMember>> getMovieCast(int id) => api.movieCredits(id);
+
+  @override
+  Future<List<Movie>> getSimilarMovies(int id) => api.similarMovies(id);
 }
 
+/// Запасной репозиторий: работает без ключа TMDB и без сети.
+///
+/// Задержки не украшение — без них демо «три запроса разом» показывать нечего:
+/// разница между суммой ожиданий и самым долгим из них видна только тогда,
+/// когда ожидание вообще есть.
 final class MovieRepositoryMock implements MovieRepository {
-  const MovieRepositoryMock();
+  const MovieRepositoryMock({
+    this.latency = const Duration(milliseconds: 800),
+  });
+
+  final Duration latency;
 
   @override
-  Future<MoviesPageResponse> getMovies() async => _mockTopRatedMoviesResponse;
+  Future<MoviesPageResponse> getMovies() =>
+      Future<MoviesPageResponse>.delayed(latency, () => _mockTopRatedMoviesResponse);
 
   @override
-  Future<MovieGenresResponse> getGenres() async => _mockMovieGenresResponse;
+  Future<MovieGenresResponse> getGenres() =>
+      Future<MovieGenresResponse>.delayed(latency, () => _mockMovieGenresResponse);
 
   @override
-  Future<Movie> getMovieById(int id) async =>
-      _mockTopRatedMoviesResponse.results.firstWhere(
-        (Movie movie) => movie.id == id,
-      );
+  Future<MovieDetails> getMovieDetails(int id) =>
+      Future<MovieDetails>.delayed(latency, () {
+        final Movie movie = _movieById(id);
+
+        return MovieDetails(
+          id: movie.id,
+          title: movie.title,
+          overview: movie.overview,
+          tagline: 'Offline fixture, no TMDB key provided',
+          runtimeMinutes: 120 + movie.id % 40,
+          status: 'Released',
+          genres: <Genre>[
+            for (final Genre genre in _mockMovieGenresResponse.genres)
+              if (movie.genreIds.contains(genre.id)) genre,
+          ],
+          voteAverage: movie.voteAverage,
+          voteCount: movie.voteCount,
+          releaseDate: movie.releaseDate,
+          posterPath: movie.posterPath,
+        );
+      });
+
+  @override
+  Future<List<CastMember>> getMovieCast(int id) =>
+      Future<List<CastMember>>.delayed(latency, () {
+        final Movie movie = _movieById(id);
+
+        return <CastMember>[
+          for (int index = 0; index < 6; index++)
+            CastMember(
+              id: movie.id * 100 + index,
+              name: 'Fixture Actor ${index + 1}',
+              character: 'Character ${index + 1}',
+              profilePath: null,
+            ),
+        ];
+      });
+
+  @override
+  Future<List<Movie>> getSimilarMovies(int id) =>
+      Future<List<Movie>>.delayed(latency, () {
+        return <Movie>[
+          for (final Movie movie in _mockTopRatedMoviesResponse.results)
+            if (movie.id != id) movie,
+        ];
+      });
+
+  Movie _movieById(int id) => _mockTopRatedMoviesResponse.results.firstWhere(
+    (Movie movie) => movie.id == id,
+    orElse: () => throw ApiException(statusCode: 404, path: 'movie/$id'),
+  );
 }
 
 const MoviesPageResponse _mockTopRatedMoviesResponse = MoviesPageResponse(

@@ -7,3 +7,7 @@ sealed class MovieListEvent {
 final class MovieListStarted extends MovieListEvent {
   const MovieListStarted();
 }
+
+final class MovieListRefreshed extends MovieListEvent {
+  const MovieListRefreshed();
+}

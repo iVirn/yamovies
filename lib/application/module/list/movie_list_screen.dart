@@ -3,13 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../components/poster_fallback.dart';
+import '../../../components/movie_poster.dart';
 import '../../../dependency_injection/dependency_container/dependency_scope.dart';
 import '../../../domain/catalog_stats.dart';
 import '../../../domain/movie.dart';
 import '../../../utils/movie_filters.dart';
 import '../../../utils/movie_formatters.dart';
-import '../../../utils/movie_poster_assets.dart';
 import '../../../utils/tmdb_attribution.dart';
 import '../../controller_scope.dart';
 import '../../demo_settings.dart';

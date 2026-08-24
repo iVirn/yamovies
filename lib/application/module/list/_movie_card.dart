@@ -4,7 +4,6 @@ class _MovieCard extends StatelessWidget {
   const _MovieCard({
     required this.movie,
     required this.genreNames,
-    required this.posterAssetPath,
     required this.isFavorite,
     required this.onFavoriteTap,
     required this.onTap,
@@ -12,7 +11,6 @@ class _MovieCard extends StatelessWidget {
 
   final Movie movie;
   final List<String> genreNames;
-  final String? posterAssetPath;
   final bool isFavorite;
   final VoidCallback onFavoriteTap;
   final VoidCallback onTap;
@@ -31,19 +29,13 @@ class _MovieCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: <Widget>[
-                  posterAssetPath == null
-                      ? const PosterFallback()
-                      : Image.asset(
-                          posterAssetPath!,
-                          fit: BoxFit.cover,
-                          semanticLabel: '${movie.title} poster',
-                          errorBuilder:
-                              (
-                                BuildContext context,
-                                Object error,
-                                StackTrace? stackTrace,
-                              ) => const PosterFallback(),
-                        ),
+                  MoviePoster(
+                    movieId: movie.id,
+                    posterPath: movie.posterPath,
+                    title: movie.title,
+                    size: 'w342',
+                    cacheWidth: 420,
+                  ),
                   const _PosterGradient(),
                   Positioned(
                     top: 8,

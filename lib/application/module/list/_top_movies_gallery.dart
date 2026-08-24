@@ -4,13 +4,11 @@ class _TopMoviesGallery extends StatefulWidget {
   const _TopMoviesGallery({
     required this.movies,
     required this.genreNamesById,
-    required this.posterAssets,
     required this.onMovieTap,
   });
 
   final List<Movie> movies;
   final Map<int, String> genreNamesById;
-  final Map<int, String> posterAssets;
   final ValueChanged<Movie> onMovieTap;
 
   @override
@@ -119,7 +117,6 @@ class _TopMoviesGalleryState extends State<_TopMoviesGallery> {
                       child: _TopMovieTile(
                         movie: movie,
                         genreNames: _resolveGenreNames(movie),
-                        posterAssetPath: widget.posterAssets[movie.id],
                         onTap: () => widget.onMovieTap(movie),
                       ),
                     ),

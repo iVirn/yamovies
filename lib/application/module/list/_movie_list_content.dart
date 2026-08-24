@@ -24,7 +24,6 @@ class _MovieListContent extends StatelessWidget {
               child: _TopMoviesGallery(
                 movies: movies,
                 genreNamesById: genreNamesById,
-                posterAssets: moviePosterAssets,
                 onMovieTap: (Movie movie) =>
                     controller.openMovieDetails(context, movie, genres),
               ),
@@ -65,7 +64,6 @@ class _MovieListContent extends StatelessWidget {
                     return _MovieCard(
                       movie: movie,
                       genreNames: resolveMovieGenres(movie, genreNamesById),
-                      posterAssetPath: moviePosterAssets[movie.id],
                       isFavorite: controller.isFavorite(movie.id),
                       onFavoriteTap: () => controller.toggleFavorite(movie.id),
                       onTap: () =>

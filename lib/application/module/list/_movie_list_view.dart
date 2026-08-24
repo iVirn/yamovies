@@ -28,8 +28,49 @@ class _MovieListView extends StatelessWidget {
                 return _MovieListContent(state: success, controller: controller);
               },
             ),
+            MovieListFailureState failure => _MovieListError(state: failure),
           };
         },
+      ),
+    );
+  }
+}
+
+class _MovieListError extends StatelessWidget {
+  const _MovieListError({required this.state});
+
+  final MovieListFailureState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.cloud_off,
+              size: 48,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              state.message,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: () =>
+                  context.read<MovieListBloc>().add(const MovieListRefreshed()),
+              icon: const Icon(Icons.refresh),
+              label: Text(state.canRetry ? 'Retry' : 'Reload'),
+            ),
+          ],
+        ),
       ),
     );
   }

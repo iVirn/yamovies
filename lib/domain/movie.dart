@@ -16,6 +16,29 @@ class Movie {
     required this.voteCount,
   });
 
+  /// Разбор руками — ровно как на слайде «Из JSON в модель»: каждое поле
+  /// приводится к типу и получает значение по умолчанию, иначе `null`
+  /// из ответа уронит экран.
+  factory Movie.fromJson(Map<String, Object?> json) => Movie(
+    adult: json['adult'] as bool? ?? false,
+    backdropPath: json['backdrop_path'] as String?,
+    genreIds: <int>[
+      for (final Object? id in json['genre_ids'] as List<Object?>? ?? const [])
+        if (id is int) id,
+    ],
+    id: json['id'] as int,
+    originalLanguage: json['original_language'] as String? ?? '',
+    originalTitle: json['original_title'] as String? ?? '',
+    overview: json['overview'] as String? ?? '',
+    popularity: (json['popularity'] as num?)?.toDouble() ?? 0,
+    posterPath: json['poster_path'] as String?,
+    releaseDate: json['release_date'] as String?,
+    title: json['title'] as String? ?? '',
+    video: json['video'] as bool? ?? false,
+    voteAverage: (json['vote_average'] as num?)?.toDouble() ?? 0,
+    voteCount: json['vote_count'] as int? ?? 0,
+  );
+
   final bool adult;
   final String? backdropPath;
   final List<int> genreIds;
@@ -34,6 +57,11 @@ class Movie {
 
 class Genre {
   const Genre({required this.id, required this.name});
+
+  factory Genre.fromJson(Map<String, Object?> json) => Genre(
+    id: json['id'] as int,
+    name: json['name'] as String? ?? 'Unknown',
+  );
 
   final int id;
   final String name;

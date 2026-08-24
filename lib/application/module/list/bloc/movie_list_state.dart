@@ -14,3 +14,10 @@ final class MovieListSuccessState extends MovieListState {
   final List<Movie> movies;
   final List<Genre> genres;
 }
+
+final class MovieListFailureState extends MovieListState {
+  const MovieListFailureState({required this.message, required this.canRetry});
+
+  final String message;
+  final bool canRetry;
+}
