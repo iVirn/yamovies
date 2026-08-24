@@ -71,35 +71,32 @@ flutter run --dart-define=TMDB_API_KEY=<ключ>
 
 ## async-01-event-loop-isolate
 
-Демо «UI замирает» из первого раздела: одна и та же CPU-работа сначала блокирует
-UI-изолят, потом уезжает в `Isolate.run`.
+Демо «UI замирает»: одна и та же CPU-работа сначала блокирует UI-изолят,
+потом уезжает в `Isolate.run`.
 
-**Добавлено**
+**Где смотреть в приложении**
 
-- `lib/domain/catalog_stats.dart` — «индекс каталога»: чистая функция
-  `computeCatalogStats` без замыканий и ссылок на UI (такую можно отдать
-  в `Isolate.run` или `compute` как есть) плюс модели `CatalogStatsRequest`
-  и `CatalogStats`. Вес расчёта задаётся `CatalogStatsRequest.defaultPasses` —
-  если на вашей машине лаг незаметен, поднимите значение.
-- `lib/application/demo_settings.dart` — `DemoSettings`, общий `ChangeNotifier`
-  с переключателями демо. Дальше каждый пример лекции добавляет сюда ровно один
-  флаг «как неправильно / как правильно».
-- `lib/application/module/list/_catalog_stats_panel.dart` — панель на ленте:
-  кнопка «пересчитать», переключатель изолята, результат со временем расчёта
-  и два живых индикатора (`LinearProgressIndicator` и вращающаяся иконка).
-  По ним и видно, что UI-изолят встал: анимация замирает вместе с ним.
+Лента → карточка **«Lecture demos»** → блок **«Catalogue index»**: кнопка
+пересчёта, переключатель изолята и два живых индикатора. По ним и видно,
+что UI-изолят встал: анимация замирает вместе с ним.
 
-**Изменено**
+**Файлы**
 
-- `MovieListController` получил `recalculateStats`: замер `Stopwatch` и развилка
-  «считать здесь» против `await Isolate.run(...)`. Метод объявлен `async`
-  специально — видно, что `async` сам по себе от блокировки не спасает.
-- `DependencyContainer` и `main.dart` — в контейнер добавлен `DemoSettings`.
-- `_MovieListContent` — панель встроена между галереей и фильтрами.
-- `test/widget_test.dart` — панель занимает место на экране, поэтому вьюпорт
-  в тестах вырос до 1600 px, а прокрутка — до 900 px. `pumpAndSettle` заменён
-  на `_pumpFrames`: с бесконечной анимацией дерево виджетов не «успокаивается»
-  никогда, и `pumpAndSettle` ушёл бы в таймаут.
+| Файл | Что в нём |
+|---|---|
+| `lib/domain/catalog_stats.dart` | «Индекс каталога»: чистая функция `computeCatalogStats` без замыканий и ссылок на UI — такую можно отдать в `Isolate.run` или `compute` как есть. Вес расчёта задаёт `CatalogStatsRequest.defaultPasses` |
+| `lib/application/module/list/movie_list_controller.dart` | `recalculateStats`: замер `Stopwatch` и развилка «считать здесь» против `await Isolate.run(...)`. Метод объявлен `async` специально — видно, что `async` сам по себе от блокировки не спасает |
+| `lib/application/module/list/_catalog_stats_panel.dart` | Панель демо: кнопка, переключатель, результат и «пульс кадров» — бесконечная анимация, по которой заметен фриз |
+| `lib/application/demo_settings.dart` | `DemoSettings` — общий `ChangeNotifier` с переключателями демо. Дальше каждый пример добавляет сюда ровно один флаг |
+| `lib/dependency_injection/dependency_container/dependency_container.dart` | Контейнер получил `DemoSettings` и метод `dispose`; аннотация `@immutable` снята — он держит объекты с состоянием |
+| `lib/dependency_injection/dependency_container/dependency_owner.dart` | Владелец контейнера: раздаёт зависимости вниз и закрывает их, когда уходит из дерева |
+| `lib/application/module/list/_movie_list_content.dart` | Панель встроена между галереей и фильтрами |
+| `lib/application/module/details/_movie_details_content.dart` | Подпись на баннере фильма стала белой, схлопнутая шапка — чёрной |
+| `lib/main.dart` | Сборка контейнера и запуск через `DependencyOwner` |
+| `demo.sh` | Запуск примера, шаги демо и (в примере 10) отправка диплинка |
+| `.run/YaMovies (TMDB).run.xml` | Конфигурация запуска Android Studio с ключом TMDB |
+| `test/dependency_owner_test.dart` | Владелец закрывает контейнер, когда уходит из дерева |
+| `test/widget_test.dart` | Вьюпорт вырос до 1600 px, `pumpAndSettle` заменён на `_pumpFrames`: с бесконечной анимацией дерево не «успокаивается» никогда |
 
 **Как показывать**
 

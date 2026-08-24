@@ -17,6 +17,11 @@ class _MovieDetailsContent extends StatelessWidget {
           SliverAppBar(
             expandedHeight: 420,
             pinned: true,
+            // Шапка живёт поверх постера: белый текст и иконки читаются
+            // на любом кадре, а тёмный фон подхватывает их же, когда шапка
+            // схлопывается при прокрутке.
+            backgroundColor: Colors.black,
+            foregroundColor: Colors.white,
             actions: const <Widget>[
               _DetailsFavoriteAction(),
               SizedBox(width: 8),
@@ -26,6 +31,13 @@ class _MovieDetailsContent extends StatelessWidget {
                 movie.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  // Тень нужна там, где под подписью светлый кадр постера.
+                  shadows: <Shadow>[
+                    Shadow(blurRadius: 8, color: Colors.black54),
+                  ],
+                ),
               ),
               background: Stack(
                 fit: StackFit.expand,

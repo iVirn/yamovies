@@ -5,8 +5,13 @@
 #   ./demo.sh                 — собрать и запустить пример текущей ветки
 #   ./demo.sh -d macos        — выбрать устройство (любые флаги уходят в flutter run)
 #   ./demo.sh steps           — показать шаги демо этой ветки, ничего не запуская
+#   ./demo.sh install         — собрать APK и поставить через adb
 #   ./demo.sh link            — отправить диплинк в запущенное приложение (пример 10)
 #   ./demo.sh link movie/42   — свой путь вместо movie/278/cast
+#
+# `install` нужен там, где `flutter run` не видит устройство: некоторые
+# прошивки (например, Samsung) не отдают полный `getprop`, и Flutter считает
+# телефон неподдерживаемым. Через adb всё ставится и запускается как обычно.
 #
 # Ключ TMDB берётся из переменной окружения TMDB_API_KEY, а если её нет —
 # из конфигурации запуска Android Studio (.run/YaMovies (TMDB).run.xml).
@@ -134,6 +139,24 @@ resolve_api_key() {
   fi
 }
 
+# --- Установка через adb ------------------------------------------------------
+install_apk() {
+  local api_key
+  api_key="$(resolve_api_key)"
+
+  echo "Собираем debug APK…"
+  flutter build apk --debug --dart-define=TMDB_API_KEY="$api_key"
+
+  echo "Ставим на устройство…"
+  adb install -r build/app/outputs/flutter-apk/app-debug.apk
+
+  echo "Запускаем…"
+  adb shell monkey -p com.yandex.yamovies -c android.intent.category.LAUNCHER 1 >/dev/null
+
+  echo
+  demo_steps
+}
+
 # --- Диплинк ------------------------------------------------------------------
 send_link() {
   local path="${1:-$DEFAULT_LINK}"
@@ -150,7 +173,15 @@ send_link() {
 
   if command -v adb >/dev/null && [[ -n "$(adb devices | sed -n '2p')" ]]; then
     echo "→ Android: $url"
-    adb shell am start -a android.intent.action.VIEW -d "$url" >/dev/null
+    local output
+    output="$(adb shell am start -a android.intent.action.VIEW -d "$url" 2>&1)"
+
+    if grep -q 'unable to resolve Intent' <<<"$output"; then
+      echo "Схему «$SCHEME://» никто не обрабатывает — приложение не установлено."
+      echo "Поставьте его: ./demo.sh install"
+      exit 1
+    fi
+
     echo "Отправлено. Проверьте «назад»: фильм → лента."
     return
   fi
@@ -171,6 +202,10 @@ send_link() {
 case "${1:-run}" in
   steps|--steps|-s)
     demo_steps
+    exit 0
+    ;;
+  install|--install|-i)
+    install_apk
     exit 0
     ;;
   link|--link|-l)
