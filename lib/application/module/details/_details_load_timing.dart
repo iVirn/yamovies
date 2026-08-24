@@ -25,7 +25,9 @@ class _DetailsLoadTiming extends StatelessWidget {
             Row(
               children: <Widget>[
                 Icon(
-                  bundle.loadedInParallel ? Icons.call_split : Icons.linear_scale,
+                  bundle.loadedInParallel
+                      ? Icons.call_split
+                      : Icons.linear_scale,
                   size: 18,
                   color: colorScheme.primary,
                 ),

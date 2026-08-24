@@ -3,6 +3,7 @@
 import 'dart:isolate';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../data/favorites_service.dart';
 import '../../../domain/catalog_stats.dart';
@@ -10,7 +11,7 @@ import '../../../domain/movie.dart';
 import '../../../utils/movie_filters.dart';
 import '../../controller.dart';
 import '../../demo_settings.dart';
-import '../details/movie_details_screen.dart';
+import '../../router/app_router.dart';
 import '../filters/genre_filter_sheet.dart';
 
 /// Результат одного пересчёта: сами цифры плюс то, как их получили.
@@ -130,21 +131,9 @@ class MovieListController extends Controller {
     );
   }
 
+  /// Экран — это не место, а состояние: вместо `Navigator.push` мы меняем
+  /// адрес, а стек страниц Flutter соберёт из него сам.
   void openMovieDetails(BuildContext context, Movie movie, List<Genre> genres) {
-    final List<String> genreNames = resolveMovieGenres(
-      movie,
-      genreNamesById(genres),
-    );
-
-    Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) {
-          return MovieDetailsScreen(
-            movieId: movie.id,
-            genreNames: genreNames,
-          );
-        },
-      ),
-    );
+    context.go(AppRoutes.movie(movie.id));
   }
 }

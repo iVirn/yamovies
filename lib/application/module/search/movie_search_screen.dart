@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../components/movie_poster.dart';
 import '../../../dependency_injection/dependency_container/dependency_scope.dart';
 import '../../../domain/movie.dart';
 import '../../../utils/movie_formatters.dart';
 import '../../controller_scope.dart';
-import '../details/movie_details_screen.dart';
+import '../../router/app_router.dart';
 import 'movie_search_controller.dart';
 
 part '_search_field.dart';

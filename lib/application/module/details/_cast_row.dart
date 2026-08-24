@@ -2,9 +2,10 @@ part of 'movie_details_screen.dart';
 
 /// Второй из трёх запросов экрана: `/movie/{id}/credits`.
 class _CastRow extends StatelessWidget {
-  const _CastRow({required this.cast});
+  const _CastRow({required this.cast, required this.movieId});
 
   final List<CastMember> cast;
+  final int movieId;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +21,16 @@ class _CastRow extends StatelessWidget {
       children: <Widget>[
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-          child: Text('Cast', style: theme.textTheme.titleLarge),
+          child: Row(
+            children: <Widget>[
+              Expanded(child: Text('Cast', style: theme.textTheme.titleLarge)),
+              TextButton(
+                // Тот же адрес, что и у диплинка `yamovies://movie/$movieId/cast`.
+                onPressed: () => context.go(AppRoutes.movieCast(movieId)),
+                child: const Text('All cast'),
+              ),
+            ],
+          ),
         ),
         SizedBox(
           height: 172,

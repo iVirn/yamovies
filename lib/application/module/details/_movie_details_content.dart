@@ -130,7 +130,9 @@ class _MovieDetailsContent extends StatelessWidget {
               ),
             ),
           ),
-          SliverToBoxAdapter(child: _CastRow(cast: bundle.cast)),
+          SliverToBoxAdapter(
+            child: _CastRow(cast: bundle.cast, movieId: details.id),
+          ),
           SliverToBoxAdapter(child: _SimilarMoviesRow(movies: bundle.similar)),
           SliverToBoxAdapter(
             child: Padding(
@@ -144,7 +146,7 @@ class _MovieDetailsContent extends StatelessWidget {
                   const SizedBox(height: 24),
                   Divider(color: colorScheme.outlineVariant),
                   const SizedBox(height: 12),
-                  const _DetailsDemoPanel(),
+                  _DetailsDemoPanel(movieId: details.id),
                 ],
               ),
             ),

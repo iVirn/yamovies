@@ -3,7 +3,9 @@ part of 'movie_details_screen.dart';
 /// Пульт демо «три запроса разом»: переключили — нажали «перезагрузить»
 /// в шапке экрана — сравнили секундомер.
 class _DetailsDemoPanel extends StatelessWidget {
-  const _DetailsDemoPanel();
+  const _DetailsDemoPanel({required this.movieId});
+
+  final int movieId;
 
   @override
   Widget build(BuildContext context) {
@@ -16,11 +18,15 @@ class _DetailsDemoPanel extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Demo: how the screen loads', style: theme.textTheme.titleSmall),
+            Text(
+              'Demo: how the screen loads',
+              style: theme.textTheme.titleSmall,
+            ),
             SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
               value: demoSettings.parallelDetailsLoad,
-              onChanged: (bool value) => demoSettings.parallelDetailsLoad = value,
+              onChanged: (bool value) =>
+                  demoSettings.parallelDetailsLoad = value,
               title: const Text('Future.wait instead of three awaits'),
               subtitle: Text(
                 demoSettings.parallelDetailsLoad
@@ -51,6 +57,16 @@ class _DetailsDemoPanel extends StatelessWidget {
                     ? 'Fail as soon as one request fails'
                     : 'Wait for all three, then show what arrived',
                 style: theme.textTheme.bodySmall,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text('Deep link', style: theme.textTheme.titleSmall),
+            const SizedBox(height: 4),
+            SelectableText(
+              'adb shell am start -a android.intent.action.VIEW '
+              '-d "yamovies://movie/$movieId/cast"',
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontFamily: 'monospace',
               ),
             ),
           ],

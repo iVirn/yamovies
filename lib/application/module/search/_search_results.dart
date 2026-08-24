@@ -93,14 +93,7 @@ class _SearchResultsList extends StatelessWidget {
           subtitle: Text(
             '${releaseYear(movie)} · ★ ${movie.voteAverage.toStringAsFixed(1)}',
           ),
-          onTap: () => Navigator.of(context).push<void>(
-            MaterialPageRoute<void>(
-              builder: (BuildContext context) => MovieDetailsScreen(
-                movieId: movie.id,
-                genreNames: const <String>[],
-              ),
-            ),
-          ),
+          onTap: () => context.go(AppRoutes.movie(movie.id)),
         );
       },
     );

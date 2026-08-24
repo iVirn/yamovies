@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../components/movie_poster.dart';
 import '../../../components/poster_fallback.dart';
@@ -12,6 +13,7 @@ import '../../../domain/movie.dart';
 import '../../../domain/movie_details.dart';
 import '../../../utils/movie_formatters.dart';
 import '../../controller_scope.dart';
+import '../../router/app_router.dart';
 import '../../leak_probe.dart';
 import '../../demo_settings.dart';
 import 'bloc/movie_details_bloc.dart';
@@ -34,11 +36,14 @@ part '_similar_movies_row.dart';
 class MovieDetailsScreen extends StatefulWidget {
   const MovieDetailsScreen({
     required this.movieId,
-    required this.genreNames,
+    this.genreNames = const <String>[],
     super.key,
   });
 
   final int movieId;
+
+  /// Жанры, известные ленте. По диплинку их нет — тогда экран покажет те,
+  /// что приедут вместе с деталями.
   final List<String> genreNames;
 
   @override
@@ -73,7 +78,10 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
       )..add(const MovieDetailsStarted()),
       child: ControllerScope<MovieDetailsController>(
         controller: _controller,
-        child: _MovieDetailsView(genreNames: widget.genreNames),
+        child: _MovieDetailsView(
+          genreNames: widget.genreNames,
+          movieId: widget.movieId,
+        ),
       ),
     );
   }

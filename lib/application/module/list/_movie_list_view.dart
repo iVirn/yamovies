@@ -148,11 +148,7 @@ class _SearchAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       tooltip: 'Search movies',
-      onPressed: () => Navigator.of(context).push<void>(
-        MaterialPageRoute<void>(
-          builder: (BuildContext context) => const MovieSearchScreen(),
-        ),
-      ),
+      onPressed: () => context.go(AppRoutes.search),
       icon: const Icon(Icons.search),
     );
   }
@@ -165,11 +161,7 @@ class _NetworkDemoAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       tooltip: 'Network demo: 401 and refresh',
-      onPressed: () => Navigator.of(context).push<void>(
-        MaterialPageRoute<void>(
-          builder: (BuildContext context) => const NetworkDemoScreen(),
-        ),
-      ),
+      onPressed: () => context.go(AppRoutes.network),
       icon: const Icon(Icons.lan_outlined),
     );
   }
@@ -182,11 +174,7 @@ class _TokenStorageAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       tooltip: 'Where the token lives',
-      onPressed: () => Navigator.of(context).push<void>(
-        MaterialPageRoute<void>(
-          builder: (BuildContext context) => const TokenStorageScreen(),
-        ),
-      ),
+      onPressed: () => context.go(AppRoutes.token),
       icon: const Icon(Icons.key_outlined),
     );
   }
@@ -199,11 +187,7 @@ class _CacheInspectorAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       tooltip: 'Local cache',
-      onPressed: () => Navigator.of(context).push<void>(
-        MaterialPageRoute<void>(
-          builder: (BuildContext context) => const CacheInspectorScreen(),
-        ),
-      ),
+      onPressed: () => context.go(AppRoutes.cache),
       icon: const Icon(Icons.storage_outlined),
     );
   }

@@ -1,9 +1,10 @@
 part of 'movie_details_screen.dart';
 
 class _MovieDetailsView extends StatelessWidget {
-  const _MovieDetailsView({required this.genreNames});
+  const _MovieDetailsView({required this.genreNames, required this.movieId});
 
   final List<String> genreNames;
+  final int movieId;
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +18,7 @@ class _MovieDetailsView extends StatelessWidget {
             _MovieDetailsContent(bundle: bundle, genreNames: genreNames),
           MovieDetailsFailureState failure => _MovieDetailsError(
             state: failure,
+            movieId: movieId,
           ),
         };
       },
@@ -25,9 +27,10 @@ class _MovieDetailsView extends StatelessWidget {
 }
 
 class _MovieDetailsError extends StatelessWidget {
-  const _MovieDetailsError({required this.state});
+  const _MovieDetailsError({required this.state, required this.movieId});
 
   final MovieDetailsFailureState state;
+  final int movieId;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +67,7 @@ class _MovieDetailsError extends StatelessWidget {
           const SizedBox(height: 12),
           // Переключатели демо нужны именно здесь: сломанный запрос уносит
           // экран в ошибку, и выключить поломку было бы уже негде.
-          const _DetailsDemoPanel(),
+          _DetailsDemoPanel(movieId: movieId),
         ],
       ),
     );

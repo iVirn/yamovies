@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../components/movie_poster.dart';
-
 import '../../../data/favorites_service.dart';
 import '../../../data/movie_repository.dart';
 import '../../../data/sync_service.dart';
@@ -17,14 +17,12 @@ import '../../../utils/movie_filters.dart';
 import '../../../utils/movie_formatters.dart';
 import '../../../utils/tmdb_attribution.dart';
 import '../../controller_scope.dart';
-import '../../leak_probe.dart';
 import '../../demo_settings.dart';
-import '../cache/cache_inspector_screen.dart';
-import '../network/network_demo_screen.dart';
-import '../search/movie_search_screen.dart';
-import '../storage/token_storage_screen.dart';
+import '../../leak_probe.dart';
+import '../../router/app_router.dart';
 import 'bloc/movie_list_bloc.dart';
 import 'movie_list_controller.dart';
+
 
 part '_catalog_stats_panel.dart';
 part '_demo_panel_section.dart';
