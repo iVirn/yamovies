@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="YaMovies (TMDB)" type="FlutterRunConfigurationType" factoryName="Flutter">
+    <option name="filePath" value="$PROJECT_DIR$/lib/main.dart" />
+    <!-- Скопируйте этот файл в «YaMovies (TMDB).run.xml» и подставьте свой
+         ключ TMDB. Сам .run.xml не отслеживается git — ключ останется у вас. -->
+    <option name="additionalArgs" value="--dart-define=TMDB_API_KEY=ВАШ_КЛЮЧ_TMDB" />
+    <method v="2" />
+  </configuration>
+</component>

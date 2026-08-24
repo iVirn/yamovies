@@ -27,13 +27,19 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   bloc: ^9.2.1
+  equatable: ^2.1.0
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
+  flutter_secure_storage: ^11.0.0
+  go_router: ^17.5.0
   movie_database:
     path: modules/movie_database
   movie_network:
     path: modules/movie_network
+  path_provider: ^2.1.6
+  rxdart: ^0.28.0
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
@@ -45,6 +51,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  fake_async: ^1.3.3
+  dio: ^5.11.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

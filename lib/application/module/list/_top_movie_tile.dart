@@ -4,13 +4,11 @@ class _TopMovieTile extends StatelessWidget {
   const _TopMovieTile({
     required this.movie,
     required this.genreNames,
-    required this.posterAssetPath,
     required this.onTap,
   });
 
   final Movie movie;
   final List<String> genreNames;
-  final String? posterAssetPath;
   final VoidCallback onTap;
 
   @override
@@ -23,10 +21,7 @@ class _TopMovieTile extends StatelessWidget {
           children: <Widget>[
             SizedBox(
               width: 96,
-              child: _TopMoviePoster(
-                movie: movie,
-                posterAssetPath: posterAssetPath,
-              ),
+              child: _TopMoviePoster(movie: movie),
             ),
             Expanded(
               child: Padding(

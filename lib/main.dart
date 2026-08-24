@@ -1,21 +1,138 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-// import 'package:movie_database/movie_database.dart';
-// import 'package:movie_network/movie_network.dart';
-import 'package:yamovies/data/movie_repository.dart';
-import 'package:yamovies/dependency_injection/dependency_container/dependency_container.dart';
-import 'package:yamovies/dependency_injection/dependency_container/dependency_scope.dart';
+import 'package:movie_database/movie_database.dart';
+import 'package:movie_network/movie_network.dart';
+import 'package:yamovies/application/demo_settings.dart';
 import 'package:yamovies/application/movie_app.dart';
+import 'package:yamovies/data/favorites_service.dart';
+import 'package:yamovies/data/favorites_sync_api.dart';
+import 'package:yamovies/data/cached_movie_repository.dart';
+import 'package:yamovies/data/movie_repository.dart';
+import 'package:yamovies/data/sync_service.dart';
+import 'package:yamovies/data/tmdb_api.dart';
+import 'package:yamovies/data/tmdb_auth_service.dart';
+import 'package:yamovies/data/tmdb_config.dart';
+import 'package:yamovies/data/token_storages.dart';
+import 'package:yamovies/dependency_injection/dependency_container/dependency_container.dart';
+import 'package:yamovies/dependency_injection/dependency_container/dependency_owner.dart';
 
 void main() {
-  // final httpClient = NetworkHttpClient();
-  // final database = SqliteDatabase();
-  // final movieRepository = MovieRepositoryImpl(
-  //   httpClient: httpClient,
-  //   database: database,
-  // );
-  final movieRepository = const MovieRepositoryMock();
+  // runZonedGuarded нужен один раз в main: без него ошибка future, которого
+  // никто не ждал, уходит в никуда и крашлитика её не увидит.
+  runZonedGuarded<void>(
+    () async {
+      // Плагины хранилищ читаются через каналы платформы, поэтому биндинг
+      // нужно поднять до первого обращения к ним.
+      WidgetsFlutterBinding.ensureInitialized();
 
-  final container = DependencyContainer(movieRepository: movieRepository);
+      final NetworkEventBus eventBus = NetworkEventBus();
+      final AppDatabase database = AppDatabase();
+      final DemoSettings demoSettings = DemoSettings();
+      final TokenStorage tokenStorage = await _createTokenStorage(demoSettings);
+      const TmdbAuthService authService = TmdbAuthService();
+      final TokenRefresher tokenRefresher = TokenRefresher(
+        storage: tokenStorage,
+        fetchFreshToken: authService.issueAccessToken,
+        eventBus: eventBus,
+      );
 
-  runApp(DependencyScope(container: container, child: const MovieApp()));
+      final SyncService syncService = SyncService(
+        database: database,
+        api: FavoritesSyncApi(demoSettings: demoSettings),
+      );
+
+      // Сеть вернулась — толкаем очередь. В настоящем приложении сюда же
+      // подключают connectivity_plus и пуш-инициированную синхронизацию.
+      // Слушателя снимает контейнер: подписка на чужой ChangeNotifier живёт,
+      // пока её не отменят.
+      syncService.listenToConnectivity(demoSettings);
+
+      final DependencyContainer container = DependencyContainer(
+        movieRepository: CachedMovieRepository(
+          remote: _createRepository(
+            tokenStorage: tokenStorage,
+            tokenRefresher: tokenRefresher,
+            eventBus: eventBus,
+          ),
+          database: database,
+          demoSettings: demoSettings,
+        ),
+        database: database,
+        favoritesService: FavoritesService(
+          database: database,
+          syncService: syncService,
+        ),
+        syncService: syncService,
+        tokenStorage: tokenStorage,
+        tokenRefresher: tokenRefresher,
+        networkEventBus: eventBus,
+        demoSettings: demoSettings,
+      );
+
+      runApp(DependencyOwner(container: container, child: const MovieApp()));
+    },
+    (Object error, StackTrace stackTrace) =>
+        debugPrint('Unhandled error: $error\n$stackTrace'),
+  );
+}
+
+/// Токен приложения: `flutter_secure_storage` или `SharedPreferences` —
+/// переключается на экране демо. Без ключа TMDB прятать нечего, поэтому
+/// в офлайн-режиме остаётся хранилище в памяти.
+Future<TokenStorage> _createTokenStorage(DemoSettings demoSettings) async {
+  if (!TmdbConfig.hasApiKey) {
+    return InMemoryTokenStorage();
+  }
+
+  final SwitchableTokenStorage storage = SwitchableTokenStorage(
+    prefsStorage: PrefsTokenStorage(),
+    secureStorage: SecureTokenStorage(),
+    demoSettings: demoSettings,
+  );
+
+  // Ключ из сборки — это «результат логина»: кладём его в хранилище,
+  // дальше сеть берёт токен только оттуда.
+  try {
+    await storage.writeAccessToken(TmdbConfig.apiKey);
+
+    return storage;
+  } catch (error) {
+    // Keychain может быть недоступен: нет entitlement, чужая платформа,
+    // сломанная сборка. Приложение из-за этого падать не должно.
+    debugPrint('Хранилище токена недоступно ($error), работаем из памяти.');
+
+    return InMemoryTokenStorage(initialToken: TmdbConfig.apiKey);
+  }
+}
+
+/// Есть ключ — идём в TMDB, нет — работаем на офлайн-фикстуре.
+///
+/// Ключ передаётся сборкой:
+/// `flutter run --dart-define=TMDB_API_KEY=...`
+MovieRepository _createRepository({
+  required TokenStorage tokenStorage,
+  required TokenRefresher tokenRefresher,
+  required NetworkEventBus eventBus,
+}) {
+  if (!TmdbConfig.hasApiKey) {
+    debugPrint(
+      'TMDB_API_KEY не передан: работаем на офлайн-фикстуре. '
+      'Запустите с --dart-define=TMDB_API_KEY=<ключ>, чтобы увидеть сеть.',
+    );
+
+    return const MovieRepositoryMock();
+  }
+
+  // Один клиент на приложение: пул соединений, keep-alive и общая цепочка
+  // интерсепторов.
+  final HttpClient httpClient = HttpClient.create(
+    HttpClientType.network,
+    config: const HttpClientConfig(baseUrl: TmdbConfig.baseUrl),
+    tokenStorage: tokenStorage,
+    tokenRefresher: tokenRefresher,
+    eventBus: eventBus,
+  );
+
+  return MovieRepositoryImpl(api: TmdbApi(httpClient: httpClient));
 }
