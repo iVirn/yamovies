@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:yamovies/application/demo_settings.dart';
 import 'package:yamovies/data/movie_repository.dart';
 import 'package:yamovies/dependency_injection/dependency_container/dependency_container.dart';
-import 'package:yamovies/dependency_injection/dependency_container/dependency_scope.dart';
+import 'package:yamovies/dependency_injection/dependency_container/dependency_owner.dart';
 import 'package:yamovies/application/movie_app.dart';
 
 void main() {
@@ -21,5 +21,5 @@ void main() {
     demoSettings: DemoSettings(),
   );
 
-  runApp(DependencyScope(container: container, child: const MovieApp()));
+  runApp(DependencyOwner(container: container, child: const MovieApp()));
 }

@@ -14,6 +14,10 @@ import 'package:yamovies/utils/tmdb_attribution.dart';
 const MovieRepositoryMock _repository = MovieRepositoryMock();
 
 Widget _appUnderTest() {
+  // Здесь именно `DependencyScope`, а не `DependencyOwner`: зависимости
+  // создаёт сам тест, он же их и закрывает. Владелец закрывал бы их при
+  // снятии дерева — а закрытие базы ждёт реального ввода-вывода, которого
+  // в фиктивном времени виджет-теста не случается, и тест повис бы.
   return DependencyScope(
     container: DependencyContainer(
       movieRepository: _repository,
