@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 // import 'package:movie_database/movie_database.dart';
 // import 'package:movie_network/movie_network.dart';
+import 'package:yamovies/application/demo_settings.dart';
 import 'package:yamovies/data/movie_repository.dart';
 import 'package:yamovies/dependency_injection/dependency_container/dependency_container.dart';
 import 'package:yamovies/dependency_injection/dependency_container/dependency_scope.dart';
@@ -15,7 +16,10 @@ void main() {
   // );
   final movieRepository = const MovieRepositoryMock();
 
-  final container = DependencyContainer(movieRepository: movieRepository);
+  final container = DependencyContainer(
+    movieRepository: movieRepository,
+    demoSettings: DemoSettings(),
+  );
 
   runApp(DependencyScope(container: container, child: const MovieApp()));
 }

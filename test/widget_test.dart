@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:yamovies/application/demo_settings.dart';
 import 'package:yamovies/application/module/list/movie_list_screen.dart';
 import 'package:yamovies/application/movie_app.dart';
 import 'package:yamovies/components/poster_fallback.dart';
@@ -13,17 +14,27 @@ import 'package:yamovies/utils/tmdb_attribution.dart';
 const MovieRepositoryMock _repository = MovieRepositoryMock();
 
 Widget _appUnderTest() {
-  return const DependencyScope(
-    container: DependencyContainer(movieRepository: _repository),
-    child: MovieApp(),
+  return DependencyScope(
+    container: DependencyContainer(
+      movieRepository: _repository,
+      demoSettings: DemoSettings(),
+    ),
+    child: const MovieApp(),
   );
+}
+
+/// На ленте живёт бесконечная анимация пульса кадров, поэтому дерево никогда
+/// не «успокаивается»: вместо `pumpAndSettle` прокручиваем время вручную.
+Future<void> _pumpFrames(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 350));
 }
 
 void main() {
   testWidgets('catalog shows six movies at 320 px', (
     WidgetTester tester,
   ) async {
-    tester.view.physicalSize = const Size(320, 1200);
+    tester.view.physicalSize = const Size(320, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -72,8 +83,8 @@ void main() {
       await tester.pumpWidget(_appUnderTest());
       await tester.pump();
 
-      await tester.drag(find.byType(CustomScrollView), const Offset(0, -600));
-      await tester.pumpAndSettle();
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -900));
+      await _pumpFrames(tester);
 
       expect(find.text('Spirited Away'), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -115,7 +126,7 @@ void main() {
   });
 
   testWidgets('favorite state toggles one movie', (WidgetTester tester) async {
-    tester.view.physicalSize = const Size(320, 1200);
+    tester.view.physicalSize = const Size(320, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -145,7 +156,7 @@ void main() {
     await tester.pump();
 
     await tester.tap(find.byTooltip('About and credits'));
-    await tester.pumpAndSettle();
+    await _pumpFrames(tester);
 
     final AboutDialog dialog = tester.widget<AboutDialog>(
       find.byType(AboutDialog),

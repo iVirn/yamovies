@@ -5,15 +5,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../components/poster_fallback.dart';
 import '../../../dependency_injection/dependency_container/dependency_scope.dart';
+import '../../../domain/catalog_stats.dart';
 import '../../../domain/movie.dart';
 import '../../../utils/movie_filters.dart';
 import '../../../utils/movie_formatters.dart';
 import '../../../utils/movie_poster_assets.dart';
 import '../../../utils/tmdb_attribution.dart';
 import '../../controller_scope.dart';
+import '../../demo_settings.dart';
 import 'bloc/movie_list_bloc.dart';
 import 'movie_list_controller.dart';
 
+part '_catalog_stats_panel.dart';
 part '_movie_card.dart';
 part '_movie_filters_header.dart';
 part '_movie_list_content.dart';
@@ -40,7 +43,9 @@ class _MovieListScreenState extends State<MovieListScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = MovieListController();
+    _controller = MovieListController(
+      demoSettings: DependencyScope.of(context).demoSettings,
+    );
   }
 
   @override
@@ -52,9 +57,9 @@ class _MovieListScreenState extends State<MovieListScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<MovieListBloc>(
-      create: (BuildContext context) => MovieListBloc(
-        repository: DependencyScope.of(context).movieRepository,
-      )..add(const MovieListStarted()),
+      create: (BuildContext context) =>
+          MovieListBloc(repository: DependencyScope.of(context).movieRepository)
+            ..add(const MovieListStarted()),
       child: ControllerScope<MovieListController>(
         controller: _controller,
         child: const _MovieListView(),

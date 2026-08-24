@@ -30,6 +30,9 @@ class _MovieListContent extends StatelessWidget {
               ),
             ),
             SliverToBoxAdapter(
+              child: _CatalogStatsPanel(movies: movies, controller: controller),
+            ),
+            SliverToBoxAdapter(
               child: _MovieFiltersHeader(
                 moviesCount: filteredMovies.length,
                 selectedGenres: selectedGenres,
@@ -41,7 +44,9 @@ class _MovieListContent extends StatelessWidget {
             if (filteredMovies.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
-                child: _MoviesEmptyState(onClearFilters: controller.clearGenres),
+                child: _MoviesEmptyState(
+                  onClearFilters: controller.clearGenres,
+                ),
               )
             else
               SliverPadding(
