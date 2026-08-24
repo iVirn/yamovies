@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "com.yandex.yamovies"
-    compileSdk = flutter.compileSdkVersion
+    // flutter_secure_storage 11 требует компиляции против API 37.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -19,7 +20,9 @@ android {
         applicationId = "com.yandex.yamovies"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // flutter_secure_storage работает начиная с Android 6:
+        // схема RSA-OAEP + AES-GCM появилась именно там.
+        minSdk = maxOf(flutter.minSdkVersion, 23)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
