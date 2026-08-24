@@ -4,5 +4,12 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
+	<!-- Исходящие запросы: без этого sandbox молча рвёт соединение с TMDB. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<!-- Keychain для flutter_secure_storage требует настоящей Team ID:
+	     без неё локальная ad-hoc подпись становится невалидной и система
+	     убивает процесс. На macOS приложение работает без секретного
+	     хранилища — токен остаётся в памяти. -->
 </dict>
 </plist>
