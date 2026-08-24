@@ -1,14 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../components/movie_poster.dart';
 import '../../../components/poster_fallback.dart';
 import '../../../data/tmdb_config.dart';
+import '../../../dependency_injection/dependency_container/dependency_container.dart';
 import '../../../dependency_injection/dependency_container/dependency_scope.dart';
 import '../../../domain/movie.dart';
 import '../../../domain/movie_details.dart';
 import '../../../utils/movie_formatters.dart';
 import '../../controller_scope.dart';
+import '../../leak_probe.dart';
 import '../../demo_settings.dart';
 import 'bloc/movie_details_bloc.dart';
 import 'movie_details_controller.dart';
@@ -19,6 +23,7 @@ part '_details_favorite_action.dart';
 part '_details_favorite_button.dart';
 part '_details_load_timing.dart';
 part '_details_poster.dart';
+part '_favorite_activity_log.dart';
 part '_expandable_overview.dart';
 part '_meta_pill.dart';
 part '_movie_details_content.dart';

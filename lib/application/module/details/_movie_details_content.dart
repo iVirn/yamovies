@@ -139,6 +139,8 @@ class _MovieDetailsContent extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   const _DetailsFavoriteButton(),
+                  const SizedBox(height: 20),
+                  const _FavoriteActivityLog(),
                   const SizedBox(height: 24),
                   Divider(color: colorScheme.outlineVariant),
                   const SizedBox(height: 12),

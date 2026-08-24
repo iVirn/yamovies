@@ -13,12 +13,15 @@ import '../../../utils/movie_filters.dart';
 import '../../../utils/movie_formatters.dart';
 import '../../../utils/tmdb_attribution.dart';
 import '../../controller_scope.dart';
+import '../../leak_probe.dart';
 import '../../demo_settings.dart';
 import 'bloc/movie_list_bloc.dart';
 import 'movie_list_controller.dart';
 
 part '_catalog_stats_panel.dart';
+part '_demo_panel_section.dart';
 part '_favorites_counter.dart';
+part '_leak_probe_panel.dart';
 part '_movie_card.dart';
 part '_movie_filters_header.dart';
 part '_movie_list_content.dart';

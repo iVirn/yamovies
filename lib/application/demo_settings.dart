@@ -12,6 +12,7 @@ class DemoSettings extends ChangeNotifier {
   bool _parallelDetailsLoad = false;
   bool _eagerErrorOnDetails = true;
   bool _breakCastRequest = false;
+  bool _cancelSubscriptionOnDispose = false;
 
   /// Демо «UI замирает»: считать индекс каталога в отдельном изоляте
   /// (`Isolate.run`) вместо UI-изолята.
@@ -60,6 +61,18 @@ class DemoSettings extends ChangeNotifier {
     }
 
     _breakCastRequest = value;
+    notifyListeners();
+  }
+
+  /// Демо «утечка подписки»: отменять ли подписку экрана фильма в `dispose`.
+  bool get cancelSubscriptionOnDispose => _cancelSubscriptionOnDispose;
+
+  set cancelSubscriptionOnDispose(bool value) {
+    if (_cancelSubscriptionOnDispose == value) {
+      return;
+    }
+
+    _cancelSubscriptionOnDispose = value;
     notifyListeners();
   }
 }

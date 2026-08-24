@@ -13,8 +13,9 @@ class _MovieListContent extends StatelessWidget {
     final Map<int, String> genreNamesById = controller.genreNamesById(genres);
     final List<Movie> filteredMovies = controller.filteredMovies(movies);
     final List<Genre> selectedGenres = controller.selectedGenres(genres);
-    final FavoritesService favorites =
-        DependencyScope.of(context).favoritesService;
+    final FavoritesService favorites = DependencyScope.of(
+      context,
+    ).favoritesService;
 
     // Одна подписка на всю сетку, а не по одной на карточку: двадцать
     // подписок на экране — двадцать поводов забыть про cancel. `StreamBuilder`
@@ -41,7 +42,7 @@ class _MovieListContent extends StatelessWidget {
                   ),
                 ),
                 SliverToBoxAdapter(
-                  child: _CatalogStatsPanel(
+                  child: _DemoPanelSection(
                     movies: movies,
                     controller: controller,
                   ),
@@ -50,7 +51,8 @@ class _MovieListContent extends StatelessWidget {
                   child: _MovieFiltersHeader(
                     moviesCount: filteredMovies.length,
                     selectedGenres: selectedGenres,
-                    onOpenFilters: () => controller.openFilters(context, genres),
+                    onOpenFilters: () =>
+                        controller.openFilters(context, genres),
                     onClearFilters: controller.clearGenres,
                     onRemoveGenre: controller.toggleGenre,
                   ),

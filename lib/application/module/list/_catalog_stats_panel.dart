@@ -17,62 +17,54 @@ class _CatalogStatsPanel extends StatelessWidget {
     final DemoSettings demoSettings = DependencyScope.of(context).demoSettings;
     final CatalogStatsRun? run = controller.statsRun;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  const _FrameHeartbeat(),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Catalogue index',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                  ),
-                  IconButton.filledTonal(
-                    tooltip: 'Recalculate',
-                    onPressed: controller.isComputingStats
-                        ? null
-                        : () => controller.recalculateStats(movies),
-                    icon: const Icon(Icons.calculate_outlined),
-                  ),
-                ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            const _FrameHeartbeat(),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Catalogue index',
+                style: theme.textTheme.titleMedium,
               ),
-              const SizedBox(height: 8),
-              const LinearProgressIndicator(),
-              const SizedBox(height: 12),
-              ListenableBuilder(
-                listenable: demoSettings,
-                builder: (BuildContext context, Widget? child) {
-                  return SwitchListTile.adaptive(
-                    contentPadding: EdgeInsets.zero,
-                    value: demoSettings.computeStatsInIsolate,
-                    onChanged: (bool value) =>
-                        demoSettings.computeStatsInIsolate = value,
-                    title: const Text('Compute in a separate isolate'),
-                    subtitle: Text(
-                      demoSettings.computeStatsInIsolate
-                          ? 'Isolate.run: UI keeps drawing frames'
-                          : 'UI isolate: frames and taps are blocked',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  );
-                },
-              ),
-              if (run != null) ...<Widget>[
-                const Divider(height: 24),
-                _CatalogStatsResult(run: run),
-              ],
-            ],
-          ),
+            ),
+            IconButton.filledTonal(
+              tooltip: 'Recalculate',
+              onPressed: controller.isComputingStats
+                  ? null
+                  : () => controller.recalculateStats(movies),
+              icon: const Icon(Icons.calculate_outlined),
+            ),
+          ],
         ),
-      ),
+        const SizedBox(height: 8),
+        const LinearProgressIndicator(),
+        const SizedBox(height: 12),
+        ListenableBuilder(
+          listenable: demoSettings,
+          builder: (BuildContext context, Widget? child) {
+            return SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              value: demoSettings.computeStatsInIsolate,
+              onChanged: (bool value) =>
+                  demoSettings.computeStatsInIsolate = value,
+              title: const Text('Compute in a separate isolate'),
+              subtitle: Text(
+                demoSettings.computeStatsInIsolate
+                    ? 'Isolate.run: UI keeps drawing frames'
+                    : 'UI isolate: frames and taps are blocked',
+                style: theme.textTheme.bodySmall,
+              ),
+            );
+          },
+        ),
+        if (run != null) ...<Widget>[
+          const Divider(height: 24),
+          _CatalogStatsResult(run: run),
+        ],
+      ],
     );
   }
 }

@@ -76,6 +76,7 @@ cd modules/movie_database && flutter pub run build_runner build
 | `async-01-event-loop-isolate` | 01. Event loop и Future | тяжёлый расчёт в UI-изоляте против `Isolate.run` |
 | `async-02-future-wait` | 01. Event loop и Future | живой TMDB, три запроса экрана фильма через `Future.wait` |
 | `async-03-stream-favorites` | 02. Stream | избранное как `StreamController` + `StreamBuilder` |
+| `async-04-subscription-leak` | 02. Stream | `listen` без `cancel`: утечка, которую видно на экране |
 
 ## Запуск
 
@@ -217,3 +218,37 @@ cp '.run/YaMovies (TMDB).run.xml.template' '.run/YaMovies (TMDB).run.xml'
 3. В логах — `[favorites] появился первый слушатель` при входе на экран
    и `слушателей не осталось` при выходе: это `onListen` / `onCancel`
    контроллера.
+
+## async-04-subscription-leak
+
+Демо «Утечка подписки». `StreamBuilder` отписывается сам, но ручной `listen`
+приходится отменять руками — и цена ошибки здесь вынесена на экран.
+
+**Где смотреть в приложении**
+
+Лента → **«Lecture demos»** → блок **«Subscriptions»**: два счётчика
+(«Live listeners» и «Calls after dispose»), кнопка сброса и переключатель
+`cancel() in dispose`. Сама подписка живёт на экране фильма — блок
+**«Favorite activity»** под кнопкой избранного.
+
+**Файлы**
+
+| Файл | Что в нём |
+|---|---|
+| `lib/application/module/details/_favorite_activity_log.dart` | Ручная подписка на поток избранного: `listen` в `initState`, отмена в `dispose` — или её отсутствие, в зависимости от переключателя. Здесь же счёт «зомби-вызовов» |
+| `lib/application/leak_probe.dart` | Два счётчика: живые подписки и срабатывания колбэка после `dispose`. В настоящем приложении это видно только в DevTools → Memory |
+| `lib/application/module/list/_leak_probe_panel.dart` | Счётчики и переключатель на ленте |
+| `lib/application/module/list/_demo_panel_section.dart` | Все переключатели ленты собраны в один свёрнутый `ExpansionTile`: демо не должно занимать экран, пока его не показывают |
+| `lib/application/module/list/_catalog_stats_panel.dart` | Лишилась собственной карточки — теперь живёт внутри общей секции |
+| `lib/application/demo_settings.dart` | Флаг `cancelSubscriptionOnDispose` |
+
+**Как показывать**
+
+1. Переключатель `cancel() in dispose` выключен. Зайти на экран фильма
+   и вернуться три раза — «Live listeners» показывает 3.
+2. Переключить любое избранное: «Calls after dispose» растёт, а в консоли —
+   `setState() called after dispose` и строка
+   `событие пришло экрану, которого уже нет`.
+3. DevTools → Memory: каждый заход оставил ещё один живой `State`.
+4. Включить переключатель, сбросить счётчики, повторить: «Live listeners»
+   возвращается к нулю, консоль чистая.
